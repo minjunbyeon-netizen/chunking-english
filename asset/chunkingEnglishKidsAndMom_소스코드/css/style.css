@@ -1,0 +1,1084 @@
+
+html {
+    scroll-snap-type: y mandatory; /* 세로 방향 스냅 강제 */
+    scroll-behavior: smooth;
+}
+
+#hero {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    height: 100vh;
+}
+/* 중간 띠 (Marquee) - 선택사항 */
+/* 이 부분이 스냅되지 않고 자연스럽게 지나가길 원하면 이 부분은 작성하지 않아도 됩니다. */
+#marquee-bar {
+    /* 필요시: scroll-snap-align: start; */
+}
+
+#map-section {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    height: 100vh;
+}
+/* [신규] 버튼 클릭 유도 효과 (노란색 파동) */
+@keyframes attention-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); /* 금색 */
+        transform: scale(1);
+    }
+    70% {
+        box-shadow: 0 0 0 15px rgba(255, 215, 0, 0); /* 퍼지면서 투명해짐 */
+        transform: scale(1.03);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 215, 0, 0);
+        transform: scale(1);
+    }
+}
+
+.btn-guide-effect {
+    animation: attention-pulse 1.5s infinite !important;
+    border: 3px solid #FFD700 !important; /* 진한 노란 테두리 */
+    z-index: 50;
+    position: relative;
+}
+/* [통합 수정] 구름 컨테이너 + 이미지 애니메이션 전체 코드 */
+
+/* [신규] 말풍선 애니메이션 스타일 */
+
+/* 말풍선 등장 애니메이션 */
+.bubble-pop-in {
+    animation: bubblePopIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation-delay: 1s; /* 로고가 자리 잡은 후 등장 */
+}
+
+@keyframes bubblePopIn {
+    0% { opacity: 0; transform: scale(0.5) translateY(20px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* 컨텐츠 슬라이드 효과 */
+.slide-fade-out-left {
+    opacity: 0;
+    transform: translateX(-20px);
+}
+.slide-fade-out-right {
+    opacity: 0;
+    transform: translateX(20px);
+}
+.slide-fade-in {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* 말풍선 등장 (아래에서 위로 부드럽게) */
+.bubble-slide-up {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+}
+
+/* 텍스트 교체 시 페이드 효과 */
+.text-fade-out {
+    opacity: 0;
+    transform: translateX(5px);
+}
+.text-fade-in {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* 인디케이터 스타일 */
+.guide-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #ddd;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.guide-dot.active {
+    background-color: #FF5C77; /* map-pink-dark */
+    width: 16px;
+    border-radius: 10px;
+}
+
+
+
+
+
+/* [모바일 전용 최적화] 구름 컨테이너 스타일 */
+.cloud-blob-container {
+    /* 1. 몽글몽글한 구름 모양 (비정형 원형) */
+    border-radius: 56% 44% 71% 29% / 50% 59% 41% 50%;
+
+    /* 2. 구름 배경색 및 테두리 */
+    background-color: #ffffff;
+    border: 4px solid #ffffff; /* 테두리도 흰색으로 하여 더 부드럽게 */
+
+    /* 3. 내부 이미지 넘침 방지 */
+    overflow: hidden;
+
+    /* 4. 입체감 있는 그림자 */
+    box-shadow:
+            inset 0 0 20px rgba(255, 158, 170, 0.2), /* 안쪽 핑크빛 */
+            0 8px 20px rgba(157, 180, 192, 0.3);     /* 바깥 그림자 */
+
+    /* 5. 둥실둥실 애니메이션 */
+    animation: cloud-wiggle 6s ease-in-out infinite;
+    transition: all 0.5s ease-in-out;
+}
+
+/* 구름이 모양을 바꾸며 움직이는 애니메이션 */
+@keyframes cloud-wiggle {
+    0%, 100% {
+        border-radius: 56% 44% 71% 29% / 50% 59% 41% 50%;
+        transform: translateY(0);
+    }
+    50% {
+        border-radius: 40% 60% 50% 50% / 55% 45% 55% 45%;
+        transform: translateY(-5px); /* 위로 살짝 떠오름 */
+    }
+}
+
+
+/* [신규] 인트로 모달 전용 추가 스타일 */
+
+/* 1. 배경용 캔디 스트라이프 패턴 애니메이션 */
+@keyframes moveStripe {
+    0% { background-position: 0 0; }
+    100% { background-position: 30px 30px; }
+}
+
+.bg-candy-stripe {
+    background-image: linear-gradient(
+            45deg,
+            rgba(255, 255, 255, 0.4) 25%,
+            transparent 25%,
+            transparent 50%,
+            rgba(255, 255, 255, 0.4) 50%,
+            rgba(255, 255, 255, 0.4) 75%,
+            transparent 75%,
+            transparent
+    );
+    background-size: 30px 30px;
+    animation: moveStripe 1s linear infinite;
+}
+
+/* 2. 이미지 모양틀 (가로 폭 줄임 + 입체감 강화) */
+/* 수정된 쉐이프 프레임 (더 부드럽고 깔끔하게) */
+.intro-shape-frame {
+    border-radius: 58% 42% 72% 28% / 50% 58% 42% 50%;
+    border: 6px solid #ffffff; /* 테두리 두께 살짝 줄임 */
+    box-shadow:
+            inset 0 0 20px rgba(255, 230, 235, 0.5), /* 아주 연한 핑크 내부광 */
+            0 8px 20px rgba(0, 0, 0, 0.05); /* 연한 그림자 */
+    background: #fff;
+    overflow: hidden;
+    animation: float 4s ease-in-out infinite;
+    transform-origin: center;
+}
+.intro-shape-frame img {
+    animation: img-breathing 4s ease-in-out infinite alternate;
+}
+
+/* 3. 귀여운 도트 패턴 배경 */
+.bg-dot-pattern {
+    background-image: radial-gradient(#FF8FA3 2px, transparent 2px);
+    background-size: 20px 20px;
+    opacity: 0.15;
+}
+
+/* [신규] 영어 공책 스타일 (Notebook Paper) */
+.notebook-paper {
+    background-color: #ffffff;
+    /* 1. 빨간색 세로 마진 선, 2. 파란색 가로 줄 */
+    background-image:
+            linear-gradient(90deg, transparent 24px, #FFD1DA 24px, #FFD1DA 26px, transparent 26px),
+            repeating-linear-gradient(transparent, transparent 39px, #A3D8F4 40px);
+    background-size: 100% 40px; /* 줄 간격 40px */
+    background-attachment: local; /* 스크롤 시 배경 고정 */
+    line-height: 40px; /* 줄 간격과 텍스트 높이 일치시키기 */
+}
+
+/* [신규] 모달 내부 알파벳 낙하 애니메이션 */
+@keyframes modalRain {
+    0% { transform: translateY(-50px) rotate(0deg); opacity: 0; }
+    20% { opacity: 1; }
+    100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+}
+
+.modal-rain-particle {
+    position: absolute;
+    top: -50px;
+    font-family: 'Chewy', cursive;
+    pointer-events: none;
+    z-index: 1; /* 카드보다 뒤에 위치 */
+    animation: modalRain linear infinite;
+}
+
+
+/* 2. 이미지 스타일 (항상 확대된 상태 + 숨쉬기) */
+.cloud-img-effect {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 0.5rem;
+
+    /* [핵심 2] 이미지가 커졌다 작아졌다 하는 애니메이션 */
+    animation: img-breathing 3s ease-in-out infinite alternate;
+}
+
+
+/* 4. 이미지 숨쉬기 정의 */
+@keyframes img-breathing {
+    0% {
+        transform: scale(1.1); /* 기본 확대 */
+    }
+    100% {
+        transform: scale(1.2); /* 살짝 더 확대 */
+    }
+}
+
+/* 프로그래스 바 트랜지션 */
+.progress-bar-fill {
+    transition: width 0.3s ease-in-out;
+}
+
+@keyframes progress-indeterminate {
+    0% { width: 0%; margin-left: 0%; }
+    50% { width: 70%; margin-left: 30%; }
+    100% { width: 0%; margin-left: 100%; }
+}
+.animate-progress-indeterminate {
+    animation: progress-indeterminate 1.5s infinite ease-in-out;
+}
+/* [신규] 기차 도착 시 발광(Glow) 애니메이션 */
+@keyframes train-arrival-glow {
+    0% {
+        filter: drop-shadow(0 0 0 rgba(255, 215, 0, 0));
+    }
+    50% {
+        /* 기차 주변으로 황금빛이 강하게 퍼짐 */
+        filter: drop-shadow(0 0 20px rgba(255, 215, 0, 1)) brightness(1.1);
+    }
+    100% {
+        filter: drop-shadow(0 0 0 rgba(255, 215, 0, 0));
+    }
+}
+
+/* 자바스크립트에서 붙였다 뗄 클래스 */
+.train-glowing {
+    animation: train-arrival-glow 2s ease-in-out infinite;
+}
+/* [신규] 덜컹거리는 기차 애니메이션 (쿠궁쿠궁 느낌) */
+@keyframes train-hard-shake {
+    0%, 100% { transform: translateY(0); }
+    25% { transform: translateY(-1.5px); } /* 위로 살짝 */
+    50% { transform: translateY(0.5px); }  /* 아래로 미세하게 */
+    75% { transform: translateY(-1px); }   /* 다시 위로 */
+}
+
+/* 기차 이미지 컨테이너에 적용할 클래스 */
+.train-hard-shake {
+    /* 0.3초 간격으로 빠르고 반복적인 덜컹거림 */
+    animation: train-hard-shake 0.3s linear infinite;
+}
+
+/* [신규] 도착 역 강조(색상/발광) 애니메이션 */
+@keyframes destination-glow {
+    0% {
+        /* 황금색 테두리와 빛 */
+        box-shadow: 0 0 5px rgba(255, 215, 0, 0.6);
+        border-color: #FFD700 !important; /* 테두리 색상 강제 적용 */
+        transform: scale(1);
+    }
+    50% {
+        /* 빛이 퍼지고 살짝 커짐 */
+        box-shadow: 0 0 20px 8px rgba(255, 215, 0, 0.8);
+        border-color: #FFFACD !important; /* 더 밝은 레몬색 */
+        transform: scale(1.08);
+    }
+    100% {
+        /* 원래 상태로 복귀 */
+        box-shadow: 0 0 5px rgba(255, 215, 0, 0.6);
+        border-color: #FFD700 !important;
+        transform: scale(1);
+    }
+}
+
+/* 도착한 역의 박스에 적용할 클래스 */
+.active-destination-box {
+    /* 2초 간격으로 부드럽게 반복 */
+    animation: destination-glow 2s ease-in-out infinite !important;
+    z-index: 50 !important; /* 다른 역보다 위에 표시 */
+}
+/* [신규] 기차 연기(증기) 애니메이션 정의 */
+@keyframes puffRising {
+    0% {
+        transform: translate(0, 0) scale(0.4);
+        opacity: 0.9;
+    }
+    50% {
+        opacity: 0.6;
+    }
+    100% {
+        transform: translate(-10px, -40px) scale(2.2); /* 위로 올라가며 커짐 */
+        opacity: 0;
+    }
+}
+
+/* 연기 입자 공통 스타일 */
+.steam-puff {
+    position: absolute;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.9); /* 진한 흰색 연기 */
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
+    pointer-events: none;
+    animation: puffRising 1.5s ease-out infinite;
+    opacity: 0; /* 시작 전엔 안 보이게 */
+}
+/* [최적화] 모달 애니메이션 성능 향상 */
+#together-wrapper {
+    /* 브라우저에게 변형이 일어날 것임을 미리 알림 (GPU 레이어 분리) */
+    will-change: transform, opacity;
+    /* 3D 가속 강제 활성화 */
+    transform: translateZ(0) scale(0.9);
+}
+
+/* [중요] 애니메이션 중에는 렉 유발 필터 제거 (필요하다면 배경의 backdrop-blur-sm 삭제 권장) */
+.modal-backdrop-optimized {
+    background-color: rgba(0, 0, 0, 0.8); /* 블러 대신 진한 배경색 사용 */
+    backdrop-filter: none !important;      /* 블러 강제 제거 */
+    -webkit-backdrop-filter: none !important;
+}
+/* [신규] 기찻길 위 동그라미(Point) 발광 효과 */
+.active-point-glow {
+    background-color: #FFD700 !important; /* 노란색 불빛 */
+    box-shadow: 0 0 15px 5px rgba(255, 215, 0, 0.9) !important; /* 강한 발광 */
+    border-color: #ffffff !important;
+    transform: translate(-50%, -50%) scale(1.3) !important; /* 크기 확대 */
+    z-index: 29 !important; /* 기차보다는 아래, 선보다는 위 */
+    transition: all 0.5s ease-in-out;
+}
+/* [신규] 형광펜 밑줄 긋기 애니메이션 */
+@keyframes drawUnderline {
+    0% { width: 0%; opacity: 0; }
+    10% { opacity: 1; }
+    100% { width: 100%; opacity: 1; }
+}
+
+.animate-draw-line {
+    animation: drawUnderline 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards; /* 쓱- 그어지는 느낌의 가감속 */
+    animation-delay: 0.3s; /* 타이틀이 뜬 뒤에 그려지도록 딜레이 */
+    width: 0%; /* 시작 너비 0 */
+}
+/* 폰트가 로드되는 중에는 텍스트를 숨기고, 완료되면 보여줌 */
+.wf-loading body {
+    visibility: hidden;
+}
+.wf-active body, .wf-inactive body {
+    visibility: visible;
+}
+/* [수정] 폰트 변경(고운돋움) 및 가독성 최적화 */
+/* [수정] 폰트 변경(Jua) - 둥글고 귀여운 레트로 느낌 */
+.text-neon-overlay {
+    font-family: 'Jua', sans-serif; /* 전체 폰트 통일 */
+    color: #ffffff;
+    font-weight: 400; /* Jua는 기본 두께가 있어서 400으로 충분 */
+
+    /* 빛 번짐을 살짝 더 부드럽게 퍼뜨림 */
+    text-shadow:
+            0 0 10px rgba(255, 143, 163, 0.8), /* 안쪽 핑크 */
+            0 0 20px rgba(255, 92, 119, 0.5),  /* 바깥쪽 진한 핑크 */
+            1px 2px 3px rgba(0, 0, 0, 0.1);    /* 입체감 */
+
+    opacity: 1;
+    letter-spacing: 0.02em; /* 자간을 살짝 넓혀서 시원하게 */
+}
+
+/* 강조 포인트는 색상만 다르게 유지 */
+.text-neon-accent {
+    font-family: 'Jua', sans-serif;
+    color: #FFF5F7 !important;
+    text-shadow:
+            0 0 10px rgba(255, 215, 0, 0.8),
+            0 0 25px rgba(255, 215, 0, 0.5),
+            1px 2px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* "쉽게" 강조 부분도 동일한 네온 효과 적용 */
+.text-neon-accent {
+    color: #ffffff !important;
+    -webkit-text-stroke: 2px #FFD700 !important; /* 노란색/금색 테두리 */
+    text-stroke: 2px #FFD700 !important;
+    text-shadow:
+            0 0 5px #fff,
+            0 0 15px #FFD700,
+            0 0 30px #FFD700 !important;
+}
+
+/* 밤 모드 등 배경이 어두울 때 잘 보이도록 보정 (선택 사항) */
+#map-section.dark-mode .text-neon-overlay {
+    mix-blend-mode: hard-light;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* [신규] 인트로 대형 카드 전용 스타일 */
+
+/* 1. 이미지 모양틀 (쿠키커터 느낌) */
+.intro-shape-frame {
+    /* 찌그러진 원형(Blob) 모양 만들기 */
+    border-radius: 58% 42% 72% 28% / 50% 58% 42% 50%;
+    /* 두꺼운 흰색 테두리로 스티커/쿠키틀 느낌 */
+    border: 8px solid #ffffff;
+    /* 입체감을 위한 안쪽 그림자와 바깥쪽 부드러운 그림자 */
+    box-shadow:
+            inset 0 0 40px rgba(255, 143, 163, 0.4), /* 안쪽 핑크빛 */
+            0 15px 35px rgba(45, 45, 45, 0.15);      /* 바깥 그림자 */
+    background: linear-gradient(to bottom right, #FFF5F7, #ffe4e8); /* 부드러운 그라데이션 배경 */
+    overflow: hidden;
+    /* 둥실둥실 떠다니는 애니메이션 */
+    animation: float 5s ease-in-out infinite;
+    transform-origin: center;
+}
+
+/* 2. 모양틀 내부 이미지 애니메이션 */
+.intro-shape-frame img {
+    /* 이미지가 안에서 살짝 숨쉬듯 움직임 */
+    animation: img-breathing 4s ease-in-out infinite alternate;
+    filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1)); /* 이미지 자체 그림자 */
+}
+
+/* 3. 카드 배경 장식 패턴 */
+.intro-card-bg-pattern {
+    background-image: radial-gradient(#FFD1DA 2px, transparent 2px);
+    background-size: 25px 25px;
+    opacity: 0.3;
+}
+
+
+     /* --- Tree Zone & Seasons Styles --- */
+ .zone-selector {
+     position: absolute;
+     bottom: 2rem;
+     left: 50%;
+     transform: translateX(-50%);
+     display: flex;
+     gap: 0.5rem;
+     z-index: 60;
+     background: rgba(255, 255, 255, 0.2);
+     padding: 0.5rem;
+     border-radius: 1rem;
+     backdrop-filter: blur(4px);
+ }
+
+.zone-btn {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    border: 2px solid white;
+    font-family: 'Chewy', cursive;
+    font-size: 0.9rem;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+}
+
+.zone-btn:hover, .zone-btn.active {
+    transform: scale(1.2) translateY(-5px);
+    box-shadow: 0 8px 12px rgba(0,0,0,0.3);
+}
+
+/* Zone Colors */
+.zone-btn[data-zone="1"] { background: #81c784; } /* Spring */
+.zone-btn[data-zone="2"] { background: #29b6f6; } /* Summer */
+.zone-btn[data-zone="3"] { background: #ff7043; } /* Autumn */
+.zone-btn[data-zone="4"] { background: #90a4ae; } /* Winter */
+.zone-btn[data-zone="5"] { background: #ab47bc; } /* Magic */
+
+/* Zone Indicators (Locked state) */
+.zone-btn.locked {
+    filter: grayscale(100%);
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#tree-bg-layer {
+    transition: background 1.5s ease;
+}
+body { overflow-x: hidden; min-height: 100vh; display: flex; flex-direction: column; color: #2D2D2D; scroll-behavior: smooth; }
+
+/* Hero Styles */
+#logo-container { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; pointer-events: none; z-index: 50; display: flex; align-items: center; justify-content: center; transform-origin: center top; will-change: transform; }
+#main-logo { transition: transform 0.1s linear; text-align: center; white-space: nowrap; text-shadow: 2px 2px 0px #fff, 4px 4px 0px rgba(0,0,0,0.1); }
+/* [수정할 부분] 전체 코드를 아래로 교체하세요 */
+.hero-bg {
+    background-image:
+        /* 1. 도트 무늬 색상을 연하게 변경 (#FFDEE5 -> #FFE4E8) */
+            radial-gradient(#FFE4E8 2px, transparent 2px),
+                /* 2. 그라데이션 색상을 더 부드럽게 변경 */
+            linear-gradient(to bottom, #FFF5F7 0%, #FFE4E8 50%, #FFF0F5 100%);
+
+    background-size: 30px 30px, 100% 100%;
+    background-attachment: fixed;
+}
+.scroll-bounce { animation: scrollBounce 2s ease-in-out infinite; }
+@keyframes scrollBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(10px); } }
+.blob { position: absolute; filter: blur(60px); z-index: -1; opacity: 0.6; animation: blob-bounce 10s infinite ease-in-out; border-radius: 50%; }
+.blob-1 { top: 10%; left: 10%; width: 300px; height: 300px; animation-delay: 0s; }
+.blob-2 { top: 50%; right: 10%; width: 400px; height: 400px; animation-delay: 2s; background-color: #ffe4e1; }
+.blob-3 { bottom: 10%; left: 20%; width: 250px; height: 250px; animation-delay: 4s; }
+@keyframes blob-bounce { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(30px, -30px) scale(1.1); } 66% { transform: translate(-20px, 20px) scale(0.9); } }
+
+/* [신규] 기차역 천막(Awning) 스트라이프 패턴 */
+.station-awning {
+    background: repeating-linear-gradient(
+            45deg,
+            #FF8FA3,
+            #FF8FA3 10px,
+            #FFD1DA 10px,
+            #FFD1DA 20px
+    );
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* [수정] 발광 효과 타겟 변경 (디자인이 바뀌어서) */
+.active-station-glow .station-box-frame {
+    animation: gentlePulse 2s ease-in-out infinite !important;
+    border-color: #FFD700 !important;
+}
+
+/* [수정] 부드러운 호흡 효과 + 노란 불빛 */
+@keyframes gentlePulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4);
+    }
+    50% {
+        transform: scale(1.05); /* 살짝 커짐 */
+        box-shadow: 0 0 25px 5px rgba(255, 215, 0, 0.6);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 215, 0, 0);
+    }
+}
+
+/* 활성화된 버튼 자체에 애니메이션 적용 */
+.active-station-glow {
+    animation: gentlePulse 2s ease-in-out infinite !important;
+    z-index: 100 !important; /* 다른 요소보다 앞으로 나오게 고정 */
+}
+
+/* 내부 박스의 테두리 색상만 변경 (두께 변경 X -> 밀림 현상 방지) */
+.active-station-glow .relative.bg-white {
+    border-color: #FFD700 !important;
+    transition: border-color 0.3s ease;
+}
+
+/* [신규] 현재 스테이션 발광 효과 */
+@keyframes yellowPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7);
+        border-color: #FFD700;
+    }
+    70% {
+        box-shadow: 0 0 20px 15px rgba(255, 215, 0, 0);
+        border-color: #FFD700;
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 215, 0, 0);
+        border-color: #FFD700;
+    }
+}
+
+.active-station-glow .relative.bg-white {
+    animation: yellowPulse 2s infinite !important;
+    border-color: #FFD700 !important; /* 테두리 강제 노란색 */
+    border-width: 4px !important;
+    z-index: 50;
+}
+
+/* Hero Game */
+#game-section { perspective: 1000px; }
+.game-board { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(4, 1fr); gap: 8px; padding: 16px; background: #FFF5F7; border: 8px solid #FF8FA3; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.1), inset 0 0 40px rgba(255, 209, 218, 0.5); position: relative; transform: rotateX(20deg) scale(0.9); transform-style: preserve-3d; transition: transform 0.3s ease; }
+.game-board::after { content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.05) 50%); background-size: 100% 4px; z-index: 10; pointer-events: none; border-radius: 12px; }
+.tile { background-color: white; border: 2px dashed #FFD1DA; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-family: 'Jua', sans-serif; font-size: 0.8rem; color: #FF8FA3; position: relative; }
+.tile.special { border-style: solid; }
+.tile.start { background-color: #FFD1DA; color: white; border: 2px solid #FF8FA3; }
+.tile.goal { background-color: #FF8FA3; color: white; border: 2px solid #FFD1DA; }
+.tile-number { position: absolute; top: 2px; left: 4px; font-size: 0.6rem; opacity: 0.5; }
+#player-token { position: absolute; width: 40px; height: 40px; background: white; border: 3px solid #2D2D2D; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 20; top: 0; left: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.player-hop { animation: hop 0.4s ease-in-out; }
+@keyframes hop { 0% { transform: translateY(0) scale(1); } 50% { transform: translateY(-15px) scale(1.1); } 100% { transform: translateY(0) scale(1); } }
+#dice-container { position: absolute; bottom: -30px; right: -30px; z-index: 30; transform: translateZ(20px); }
+.dice { width: 60px; height: 60px; background: white; border: 4px solid #2D2D2D; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-family: 'Press Start 2P', cursive; font-size: 1.5rem; color: #2D2D2D; box-shadow: 6px 6px 0px rgba(0,0,0,0.1); }
+.shake-dice { animation: shake 0.5s infinite; }
+@keyframes shake { 0% { transform: rotate(0deg); } 25% { transform: rotate(10deg); } 50% { transform: rotate(-10deg); } 75% { transform: rotate(5deg); } 100% { transform: rotate(0deg); } }
+.confetti { position: absolute; width: 10px; height: 10px; background-color: #f00; animation: confetti-fall 3s linear forwards; z-index: 100; }
+@keyframes confetti-fall { 0% { transform: translateY(-50px) rotate(0deg); opacity: 1; } 100% { transform: translateY(300px) rotate(720deg); opacity: 0; } }
+
+
+
+/* [수정됨] 커서 애니메이션: 한 번에 이동 후 클릭 */
+@keyframes cursorMoveAndClick {
+    0% {
+        opacity: 0;
+        transform: translate(50px, 50px); /* 오른쪽 아래에서 시작 */
+    }
+    15% {
+        opacity: 1;
+    }
+    40% {
+        transform: translate(0, 0); /* 글자 위로 곧바로 도착 (멈칫 없음) */
+    }
+    50% {
+        transform: scale(0.8); /* 클릭 (작아짐) */
+    }
+    60% {
+        transform: scale(1); /* 뗌 */
+    }
+    85% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: translate(0, 0); /* 사라짐 */
+    }
+}
+
+/* 버튼 반응 애니메이션 (타이밍 동기화) */
+@keyframes buttonClickFeedback {
+    0%, 45% {
+        background-color: transparent;
+        transform: scale(1);
+    }
+    50% {
+        /* 커서가 클릭하는 50% 시점에 맞춰 반응 */
+        background-color: #FFD1DA;
+        transform: scale(0.95);
+    }
+    60% {
+        background-color: transparent;
+        transform: scale(1);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+.animate-fake-cursor {
+    animation: cursorMoveAndClick 3s ease-in-out infinite; /* 3초 간격 무한 반복 */
+    animation-delay: 0.5s;
+}
+
+.animate-button-feedback {
+    animation: buttonClickFeedback 3s ease-in-out infinite;
+    animation-delay: 0.5s;
+}
+
+/* 클릭 시 멈춤 처리 */
+.user-clicked {
+    animation: none !important;
+    background-color: transparent !important;
+    transform: scale(1) !important;
+}
+.user-clicked .animate-fake-cursor {
+    display: none !important;
+}
+
+/* Map Section Styles */
+#map-section { background-color: #64B5F6; position: relative; user-select: none; }
+.bg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transition: opacity 0.5s ease-out; pointer-events: none; }
+/* [수정] 섹션 1과 동일한 톤앤매너 (도트 패턴 + 따뜻한 핑크 그라데이션) */
+/* [수정할 부분] 전체 코드를 아래로 교체하세요 */
+#bg-layer-day {
+    z-index: 0;
+    /* Hero 섹션과 동일하게 아주 연한 핑크 톤으로 변경 */
+    background-image:
+            radial-gradient(#FFE4E8 2px, transparent 2px),
+            linear-gradient(to bottom, #FFF5F7 0%, #FFE4E8 50%, #FFF5F7 100%);
+
+    background-size: 30px 30px, 100% 100%;
+    opacity: 1;
+}
+#bg-layer-sunset { z-index: 1; background: linear-gradient(180deg, #FF9EAA 0%, #FFCC80 40%, #D1C4E9 80%, #9575CD 100%); opacity: 0; }
+#bg-layer-night { z-index: 2; background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 40%, #312e81 80%, #1e3a8a 100%); opacity: 0; }
+.hide-scrollbar::-webkit-scrollbar { display: none; } .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.cursor-grab { cursor: grab; } .cursor-grabbing { cursor: grabbing; }
+.text-distinct { text-shadow: 2px 2px 0px #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; }
+.text-distinct-night { text-shadow: 2px 2px 0px #1e1b4b, -1px -1px 0 #1e1b4b, 1px -1px 0 #1e1b4b, -1px 1px 0 #1e1b4b, 1px 1px 0 #1e1b4b; }
+.ride-card { transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.ride-card.unlocked:hover { cursor: pointer; filter: brightness(1.02); transform: translateY(-5px); }
+#park-train { z-index: 30; pointer-events: none; position: absolute; will-change: transform; transition: opacity 0.3s; }
+.card-perspective { perspective: 1000px; }
+.mini-card { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); transform-style: preserve-3d; cursor: pointer; }
+.mini-card:hover { transform: translateY(-8px) rotate(1deg); }
+.mini-card.collected .mini-card-inner { border-color: #8AC9A6; background-color: #FFF; box-shadow: 0 4px 6px -1px rgba(138, 201, 166, 0.4); }
+.mini-card-inner { position: relative; width: 100%; height: 100%; text-align: center; transform-style: preserve-3d; border-radius: 1rem; background-color: white; transition: all 0.3s ease; }
+.card-back { background: linear-gradient(135deg, #fff 0%, #FF9EAA 100%); display: flex; align-items: center; justify-content: center; border-radius: 1rem; border: 2px solid #FF9EAA; }
+.focus-overlay { perspective: 1500px; }
+.usage-table { width: 100%; border-collapse: separate; border-spacing: 0 4px; font-size: 0.9rem; color: #4a4a4a; }
+.usage-table th, .usage-table td { padding: 0.5rem; vertical-align: middle; }
+.usage-table th { font-weight: bold; width: 25%; color: #FF5C77; background-color: #fff0f3; border-radius: 6px; font-size: 0.8rem; }
+.usage-table td { background-color: #fff; border-radius: 6px; padding-left: 12px; }
+.stamp-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-15deg) scale(0); color: #FF5C77; font-family: 'Chewy', cursive; font-size: 2.2rem; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.95); border: 5px solid #FF5C77; line-height: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50; pointer-events: none; text-align: center; opacity: 0; transition: none; box-shadow: 0 4px 10px rgba(255, 92, 119, 0.3); }
+.stamp-completed { opacity: 1 !important; transform: translate(-50%, -50%) rotate(-15deg) scale(1) !important; }
+.stamp-visible { animation: stampBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.seed-slot { transition: all 0.3s ease; }
+.flying-seed { position: fixed; z-index: 100; pointer-events: none; transition: all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+.map-station-point { width: 30px; height: 30px; background-color: #8D6E63; border: 4px solid white; border-radius: 50%; box-shadow: 0 4px 6px rgba(0,0,0,0.2); position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 25; }
+.alphabet-particle { position: absolute; top: -150px; pointer-events: none; z-index: 0; font-family: 'Chewy', cursive; font-weight: bold; opacity: 0.8; text-shadow: 2px 2px 0px rgba(255,255,255,0.8); }
+@keyframes fallRotate { 0% { transform: translateY(0) rotate(0deg); opacity: 0; } 10% { opacity: 0.9; } 100% { transform: translateY(110vh) rotate(360deg); opacity: 0; } }
+.star-particle { position: absolute; background: white; border-radius: 50%; animation: twinkle 2s infinite alternate; opacity: 0; }
+.tab-button.active { background-color: #FF9EAA; color: white; border-bottom: 3px solid #FF5C77; }
+.tab-button { border-bottom: 3px solid transparent; color: #9ca3af; background-color: #f9fafb; }
+
+/* Marquee 전용 애니메이션 */
+.marquee-container {
+    overflow: hidden;
+    white-space: nowrap;
+}
+.marquee-content {
+    display: inline-flex;
+    align-items: center;
+    animation: marquee 120s linear infinite;
+}
+@keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* 탑 버튼 기본 스타일 */
+#scroll-to-top {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+
+    /* [모바일 최적화] 크기 및 위치 */
+    width: 2.8rem;
+    height: 2.8rem;
+    font-size: 0.9rem;
+
+    background-color: #FF8FA3;
+    color: white;
+    border: 2px solid white; /* 흰색 테두리 추가로 시인성 확보 */
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-shadow: 0 4px 15px rgba(255, 143, 163, 0.6);
+    cursor: pointer;
+
+    /* [중요] 레이어 최상위로 올림 (기존 50 -> 200) */
+    z-index: 200;
+
+    /* 초기 상태: 숨김 */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* [중요] 스크롤 시 JS가 붙여줄 클래스 (.show) 스타일 정의 */
+#scroll-to-top.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+#scroll-to-top:hover {
+    background-color: #FF5C77;
+    transform: scale(1.1);
+}
+
+/* PC 화면에서는 조금 더 크게 */
+@media (min-width: 768px) {
+    #scroll-to-top {
+        width: 3.5rem;
+        height: 3.5rem;
+        font-size: 1.2rem;
+        bottom: 3rem;
+        right: 3rem;
+    }
+}
+
+/* =========================================
+   3. 모바일 기찻길 동그라미 숨김
+   ========================================= */
+@media (max-width: 1200px) {
+    .map-station-point {
+        display: none !important;
+    }
+}
+#scroll-to-top:hover {
+    background-color: #FF5C77;
+    transform: scale(1.1);
+}
+
+/* [추가] Tree Modal Styles */
+.tree-apple {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background-color: #ef4444; /* Red-500 */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-family: 'Jua', sans-serif;
+    box-shadow: 2px 4px 6px rgba(0,0,0,0.2);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 10;
+}
+.tree-apple:hover {
+    transform: scale(1.2) rotate(10deg);
+    background-color: #dc2626; /* Red-600 */
+    z-index: 20;
+}
+.tree-apple::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    width: 2px;
+    height: 8px;
+    background-color: #3e2723;
+    transform: translateX(-50%);
+}
+.tree-apple::after {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    width: 12px;
+    height: 6px;
+    background-color: #81c784;
+    border-radius: 10px 0 10px 0;
+    transform: translateX(-20%) rotate(-30deg);
+}
+.apple-pop {
+    animation: applePop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+@keyframes applePop {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+.animate-spin-slow {
+    animation: spinSlow 10s linear infinite;
+}
+@keyframes spinSlow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* 2. [수정] 모달 래퍼 스타일 (밤하늘 배경 애니메이션 적용) */
+#tree-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    /* 제공해주신 밤하늘 그라데이션 */
+    background: linear-gradient(180deg, #0f0518 0%, #1a0b2e 25%, #431345 50%, #ff9a9e 100%);
+    background-size: 100% 300%;
+    animation: gradientShift 20s ease-in-out infinite alternate;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 10%; }
+    100% { background-position: 0% 90%; }
+}
+
+/* 3. [수정] 타이틀 스타일 (Chewy 폰트 적용) */
+#tree-ui-layer {
+    position: absolute;
+    top: 15%;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    pointer-events: none;
+    z-index: 20;
+}
+
+.title-letter {
+    display: inline-block;
+    font-family: 'Chewy', cursive; /* 폰트 변경 */
+    font-size: 5rem;
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow: 2px 2px 0px #ff9a9e, 0 0 20px rgba(255, 255, 255, 0.4);
+    opacity: 0;
+    transform: translateY(-100px);
+    animation: dropIn 2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+
+@keyframes dropIn {
+    0% { opacity: 0; transform: translateY(-120px) rotate(-5deg); }
+    100% { opacity: 1; transform: translateY(0) rotate(0deg); }
+}
+
+@media (max-width: 600px) {
+    .title-letter { font-size: 3rem; }
+    #tree-ui-layer { top: 10%; }
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 10%; }
+    100% { background-position: 0% 90%; }
+}
+
+/* 타이틀 스타일 */
+#tree-ui-layer {
+    position: absolute;
+    top: 15%;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.title-letter {
+    display: inline-block;
+    font-family: 'Chewy', cursive;
+    font-size: 5rem;
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow: 2px 2px 0px #ff9a9e, 0 0 20px rgba(255, 255, 255, 0.4);
+    opacity: 0;
+    transform: translateY(-100px);
+    animation: dropIn 2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+
+@keyframes dropIn {
+    0% { opacity: 0; transform: translateY(-120px) rotate(-5deg); }
+    100% { opacity: 1; transform: translateY(0) rotate(0deg); }
+}
+
+/* Together Modal Grid Styles */
+.together-day-btn {
+    aspect-ratio: 1;
+    border-radius: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* 내용을 위, 중간, 아래로 분배 */
+    padding: 10px; /* 내부 여백 추가 */
+    font-family: 'Jua', sans-serif;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+    background-color: white;
+    border: 2px solid #f3f4f6;
+    color: #9ca3af;
+}
+
+.together-day-btn.unlocked {
+    background-color: #fff;
+    border-color: #FF9EAA;
+    color: #2D2D2D;
+    cursor: pointer;
+    box-shadow: 0 4px 0px #FFD1DA;
+}
+
+.together-day-btn.unlocked:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 0px #FF9EAA;
+    border-color: #FF5C77;
+}
+
+.together-day-btn.unlocked:active {
+    transform: translateY(0px);
+    box-shadow: 0 2px 0px #FF9EAA;
+}
+
+.together-day-btn.completed {
+    background: linear-gradient(135deg, #fff 0%, #FFF0F5 100%);
+    border-color: #8AC9A6;
+    box-shadow: 0 4px 0px #A5D6A7;
+}
+
+.together-day-btn .day-num {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #2D2D2D;
+    line-height: 1;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 완료 아이콘 스타일 수정 */
+.together-day-btn .status-icon {
+    font-size: 0.9rem;
+    /*align-self: flex-end; !* 오른쪽 아래로 배치 *!*/
+    height: 1rem;
+}
+
+.together-day-btn.locked {
+    background-color: #f9fafb;
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.together-sentence-card {
+    background-color: white;
+    border: 2px solid #f3f4f6;
+    border-radius: 1.5rem;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+.together-sentence-card:hover {
+    border-color: #FF9EAA;
+    box-shadow: 0 10px 25px -5px rgba(255, 158, 170, 0.3);
+    transform: scale(1.01);
+}
+
+/* [추가] CTA 버튼 테두리 발광 애니메이션 */
+@keyframes border-glow {
+    0%, 100% {
+        /* 기본 상태: 입체 그림자만 있음 */
+        box-shadow: 0 4px 0 #6eb78e, 0 0 0 0 rgba(138, 201, 166, 0);
+    }
+    50% {
+        /* 중간 상태: 초록색 빛(Glow)이 밖으로 퍼짐 */
+        box-shadow: 0 4px 0 #6eb78e, 0 0 15px 4px rgba(138, 201, 166, 0.6);
+    }
+}
+
+.btn-glow-border {
+    animation: border-glow 2s ease-in-out infinite;
+}
+
+@media (max-width: 600px) {
+    .title-letter { font-size: 3rem; }
+    #tree-ui-layer { top: 10%; }
+}
+
+/* Responsive Fix for Dropdown on small screens */
+@media (max-width: 640px) {
+    .level-dropdown-container {
+        left: 1rem !important;
+        right: 1rem !important;
+        width: calc(100% - 2rem) !important;
+        max-width: none !important;
+    }
+    .level-dropdown-container select {
+        font-size: 0.75rem !important;
+        padding-right: 2.5rem !important;
+        padding-left: 1rem !important;
+        white-space: normal;
+        line-height: 1.2;
+    }
+}
+

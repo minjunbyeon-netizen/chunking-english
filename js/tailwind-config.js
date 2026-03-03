@@ -1,0 +1,76 @@
+tailwind.config = {
+    theme: {
+        extend: {
+            colors: {
+                'brand-pink': '#FFD1DA',
+                'brand-pink-dark': '#FF8FA3',
+                'brand-text': '#2D2D2D',
+                'brand-white': '#ffffff',
+                'brand-cream': '#FFF5F7',
+                'retro-blue': '#4A90E2',
+                'retro-yellow': '#F5A623',
+                'retro-green': '#7ED321',
+                'retro-purple': '#9B51E0',
+                'map-pink': '#FF9EAA',
+                'map-pink-dark': '#FF5C77',
+                'brand-white-dark': '#F3F4F6',
+                'brand-gray': '#f3f4f6',
+                'seed-green': '#8AC9A6',
+                'seed-blue': '#A3D8F4',
+                'seed-yellow': '#FBF595',
+                'wood-dark': '#5D4037',
+                'wood-light': '#8D6E63',
+                'rail-metal': '#CFD8DC',
+            },
+            fontFamily: {
+                'display': ['Chewy', 'Jua', 'sans-serif'],
+                'body': ['Quicksand', 'Gowun Dodum', 'Apple SD Gothic Neo', 'Malgun Gothic', 'sans-serif'],
+                'pixel': ['"Press Start 2P"', 'cursive', 'serif'],
+            },
+            boxShadow: {
+                'retro': '4px 4px 0px 0px rgba(45, 45, 45, 0.2)',
+                'retro-sm': '2px 2px 0px 0px rgba(45, 45, 45, 0.1)',
+            },
+            animation: {
+                'float': 'float 3s ease-in-out infinite',
+                'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                'wiggle': 'wiggle 1s ease-in-out infinite',
+                'fade': 'fade 0.5s ease-in-out forwards',
+                'grow-tree': 'growTree 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+                'fly-bird': 'flyBird 1s ease-out 1s forwards',
+                'sprout-pop': 'sproutPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                'stamp-bounce': 'stampBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+                'soft-bounce': 'softBounce 2s ease-in-out infinite',
+                'sun-glow': 'sunGlow 4s ease-in-out infinite alternate',
+                'train-chug': 'trainChug 0.6s ease-in-out infinite alternate',
+                'steam-rise': 'steamRise 2s ease-out infinite',
+                'sway': 'sway 3s ease-in-out infinite',
+                'twinkle': 'twinkle 2s ease-in-out infinite alternate',
+                'hand-swipe': 'handSwipe 2s ease-in-out infinite',
+                'hand-swipe-vertical': 'handSwipeVertical 2s ease-in-out infinite',
+                'train-glow': 'trainGlow 2s ease-in-out infinite alternate',
+                'pop-in': 'popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+            },
+            keyframes: {
+                float: {'0%, 100%': {transform: 'translateY(0)'}, '50%': {transform: 'translateY(-10px)'}},
+                wiggle: {'0%, 100%': {transform: 'rotate(-3deg)'}, '50%': {transform: 'rotate(3deg)'}},
+                fade: {'0%': {opacity: '0'}, '100%': {opacity: '1'}},
+                sproutPop: {'0%': {transform: 'scale(0)'}, '60%': {transform: 'scale(1.2)'}, '100%': {transform: 'scale(1)'}},
+                growTree: {'0%': {transform: 'scaleY(0)', opacity: '0'}, '100%': {transform: 'scaleY(1)', opacity: '1'}},
+                flyBird: {'0%': {transform: 'translate(-50px, -30px) scale(0.5)', opacity: '0'}, '50%': {transform: 'translate(0, -10px) scale(1.1)', opacity: '1'}, '100%': {transform: 'translate(0, 0) scale(1)', opacity: '1'}},
+                stampBounce: {'0%': {transform: 'translate(-50%, -50%) rotate(-15deg) scale(3.5)', opacity: '0.2'}, '70%': {transform: 'translate(-50%, -50%) rotate(-15deg) scale(0.95)', opacity: '1'}, '100%': {transform: 'translate(-50%, -50%) rotate(-15deg) scale(1)', opacity: '1'}},
+                softBounce: {'0%, 100%': {transform: 'translateY(0)'}, '50%': {transform: 'translateY(5px)'}},
+                sunGlow: {'0%': {transform: 'scale(1)', opacity: '0.8'}, '100%': {transform: 'scale(1.1)', opacity: '1'}},
+                trainChug: {'0%': {transform: 'translateY(0)'}, '100%': {transform: 'translateY(-2px)'}},
+                steamRise: {'0%': {transform: 'translateY(0) scale(0.5)', opacity: '0.8'}, '100%': {transform: 'translateY(-30px) scale(2)', opacity: '0'}},
+                twinkle: {'0%': {opacity: '0.3', transform: 'scale(0.8)'}, '100%': {opacity: '1', transform: 'scale(1.2)'}},
+                handSwipe: {'0%, 100%': {transform: 'translateX(-20px) rotate(-10deg)', opacity: '0.8'}, '50%': {transform: 'translateX(20px) rotate(10deg)', opacity: '1'}},
+                handSwipeVertical: {'0%, 100%': {transform: 'translateY(-20px)', opacity: '0.8'}, '50%': {transform: 'translateY(20px)', opacity: '1'}},
+                trainGlow: {'0%': {filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.6)) brightness(1.05)'}, '100%': {filter: 'drop-shadow(0 0 15px rgba(255,255,255,0.9)) brightness(1.15)'}},
+                popIn: {'0%': {opacity: '0', transform: 'scale(0.8) translateY(20px)'}, '100%': {opacity: '1', transform: 'scale(1) translateY(0)'}},
+            }
+        }
+    }
+};
+
+
