@@ -1,3 +1,4 @@
+SET NAMES utf8mb4;
 USE chunking_english;
 
 SET FOREIGN_KEY_CHECKS = 0;

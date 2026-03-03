@@ -161,6 +161,7 @@ def main():
     # ── SQL 파일 작성 ──
     print(f"Writing SQL: {OUTPUT_SQL}")
     with open(OUTPUT_SQL, "w", encoding="utf-8") as f:
+        f.write("SET NAMES utf8mb4;\n")
         f.write("USE chunking_english;\n\n")
         f.write("SET FOREIGN_KEY_CHECKS = 0;\n")
         f.write("TRUNCATE TABLE expressions;\n")

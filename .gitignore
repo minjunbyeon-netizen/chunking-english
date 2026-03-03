@@ -10,6 +10,10 @@ asset/~$*
 *.tmp
 *.log
 
+# ─── 자동 생성 캐시 ───────────────────────────────────────────────
+database/mapping_check.json
+database/_tmp_check.py
+
 # ─── Windows 시스템 파일 ──────────────────────────────────────────
 Thumbs.db
 desktop.ini
