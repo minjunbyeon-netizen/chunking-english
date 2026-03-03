@@ -234,8 +234,7 @@ $next_day = $day_num < 50 ? $day_num + 1 : null;
     <script>
     let ttsState = {
         isPlaying:false, isPaused:false, currentSheet:null,
-        sentences:[], currentSentenceIndex:0, repeatCount:0, maxRepeat:7,
-        currentAudio: null
+        sentences:[], currentSentenceIndex:0, currentAudio:null
     };
     const wait = ms => new Promise(r => setTimeout(r, ms));
 
@@ -245,7 +244,7 @@ $next_day = $day_num < 50 ? $day_num + 1 : null;
         if (ttsState.currentAudio) { ttsState.currentAudio.pause(); ttsState.currentAudio = null; }
         ttsState = { isPlaying:true, isPaused:false, currentSheet:sheet,
             sentences:Array.from(sheet.querySelectorAll('.magic-card')),
-            currentSentenceIndex:0, repeatCount:0, maxRepeat:7, currentAudio:null };
+            currentSentenceIndex:0, currentAudio:null };
         btn.style.display = 'none';
         sheet.querySelector('.tts-player-bar').classList.add('active');
         updatePlayerUI(sheet);
@@ -254,25 +253,20 @@ $next_day = $day_num < 50 ? $day_num + 1 : null;
 
     async function processQueue() {
         while (ttsState.isPlaying && ttsState.currentSentenceIndex < ttsState.sentences.length) {
-            const card = ttsState.sentences[ttsState.currentSentenceIndex];
+            if (ttsState.isPaused) { await wait(200); continue; }
+            const card     = ttsState.sentences[ttsState.currentSentenceIndex];
             const audioUrl = card.dataset.audioUrl;
             const text     = card.querySelector('.eng-sentence').innerText;
             ttsState.sentences.forEach(c => c.classList.remove('reading'));
             card.classList.add('reading');
-            while (ttsState.repeatCount < ttsState.maxRepeat) {
-                if (!ttsState.isPlaying) return;
-                if (ttsState.isPaused) { await wait(200); continue; }
-                updatePlayerUI(ttsState.currentSheet);
-                if (audioUrl) {
-                    await playMp3(audioUrl);
-                } else {
-                    await speakTTS(text);
-                }
-                ttsState.repeatCount++;
-                await wait(600);
+            updatePlayerUI(ttsState.currentSheet);
+            if (audioUrl) {
+                await playMp3(audioUrl);
+            } else {
+                await speakTTS(text);
             }
-            ttsState.repeatCount = 0;
             ttsState.currentSentenceIndex++;
+            await wait(600);
         }
         stopTTS();
     }
@@ -300,8 +294,10 @@ $next_day = $day_num < 50 ? $day_num + 1 : null;
         const countEl   = sheet.querySelector('.current-count');
         const fillEl    = sheet.querySelector('.progress-fill');
         const pauseIcon = sheet.querySelector('.pause-btn i');
-        if (countEl)   countEl.innerText = ttsState.repeatCount + 1;
-        if (fillEl)    fillEl.style.width = ((ttsState.repeatCount + 1) / ttsState.maxRepeat * 100) + '%';
+        const total     = ttsState.sentences.length;
+        const current   = ttsState.currentSentenceIndex + 1;
+        if (countEl)   countEl.innerText = current;
+        if (fillEl)    fillEl.style.width = (current / total * 100) + '%';
         if (pauseIcon) pauseIcon.className = ttsState.isPaused ? 'fa-solid fa-play' : 'fa-solid fa-pause';
     }
 
@@ -316,7 +312,7 @@ $next_day = $day_num < 50 ? $day_num + 1 : null;
     }
 
     function restartTTS() {
-        ttsState.repeatCount = 0; ttsState.currentSentenceIndex = 0;
+        ttsState.currentSentenceIndex = 0;
         if (ttsState.currentAudio) { ttsState.currentAudio.pause(); ttsState.currentAudio = null; }
         window.speechSynthesis.cancel();
         updatePlayerUI(ttsState.currentSheet);
