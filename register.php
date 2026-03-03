@@ -223,8 +223,8 @@ async function doRegister() {
         const data = await res.json();
 
         if (res.ok) {
-            showSuccess('가입 완료! 로그인 페이지로 이동합니다...');
-            setTimeout(() => location.href = '/chunking-english/login.php', 1400);
+            showSuccess('인증 이메일을 발송했습니다. 메일함을 확인하고 링크를 클릭해주세요.');
+            document.getElementById('btn-reg').disabled = true;
         } else {
             showError(data.error || '회원가입에 실패했습니다.');
         }

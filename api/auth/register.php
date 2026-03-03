@@ -2,6 +2,7 @@
 /**
  * POST /api/auth/register.php
  * Body: { email, password, nickname }
+ * → 가입 후 인증 이메일 발송, email_verified=0 상태로 저장
  */
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
@@ -33,17 +34,99 @@ if (strlen($password) < 6) {
 }
 
 // 이메일 중복 확인
-$stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+$stmt = $pdo->prepare("SELECT id, email_verified FROM users WHERE email = ?");
 $stmt->execute([$email]);
-if ($stmt->fetch()) {
-    http_response_code(409);
-    echo json_encode(['error' => '이미 사용 중인 이메일입니다.']);
+$existing = $stmt->fetch();
+
+if ($existing) {
+    if (!$existing['email_verified']) {
+        // 미인증 계정 → 인증 메일 재발송
+        $token   = bin2hex(random_bytes(32));
+        $expires = date('Y-m-d H:i:s', strtotime('+24 hours'));
+        $pdo->prepare("UPDATE users SET verification_token=?, token_expires_at=? WHERE email=?")
+            ->execute([$token, $expires, $email]);
+        send_verification_email($email, $nickname ?: $email, $token);
+        echo json_encode(['success' => true, 'message' => '인증 이메일을 재발송했습니다. 메일함을 확인해주세요.']);
+    } else {
+        http_response_code(409);
+        echo json_encode(['error' => '이미 사용 중인 이메일입니다.']);
+    }
     exit;
 }
 
-// 회원 등록
-$hashed = password_hash($password, PASSWORD_BCRYPT);
-$stmt   = $pdo->prepare("INSERT INTO users (email, password, nickname) VALUES (?, ?, ?)");
-$stmt->execute([$email, $hashed, $nickname ?: null]);
+// 토큰 생성 (24시간 유효)
+$token   = bin2hex(random_bytes(32));
+$expires = date('Y-m-d H:i:s', strtotime('+24 hours'));
+$hashed  = password_hash($password, PASSWORD_BCRYPT);
 
-echo json_encode(['success' => true, 'message' => '회원가입이 완료되었습니다.']);
+// 회원 등록 (미인증 상태)
+$stmt = $pdo->prepare("
+    INSERT INTO users (email, password, nickname, email_verified, verification_token, token_expires_at)
+    VALUES (?, ?, ?, 0, ?, ?)
+");
+$stmt->execute([$email, $hashed, $nickname ?: null, $token, $expires]);
+
+// 인증 이메일 발송
+$sent = send_verification_email($email, $nickname ?: $email, $token);
+
+if (!$sent) {
+    // 이메일 발송 실패해도 가입은 완료 (재발송 가능)
+    echo json_encode(['success' => true, 'message' => '가입은 완료됐으나 이메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.']);
+    exit;
+}
+
+echo json_encode(['success' => true, 'message' => '인증 이메일을 발송했습니다. 메일함을 확인해주세요.']);
+
+
+// ── 인증 이메일 발송 함수 ─────────────────────────────────────────────────
+function send_verification_email(string $to, string $name, string $token): bool
+{
+    $link    = APP_URL . '/verify_email.php?token=' . $token;
+    $subject = '[청킹잉글리시] 이메일 인증을 완료해주세요';
+    $html    = <<<HTML
+<!DOCTYPE html>
+<html lang="ko">
+<body style="font-family:'Apple SD Gothic Neo',sans-serif;background:#FFF5F7;margin:0;padding:40px 20px;">
+  <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:20px;padding:40px;border:2px solid #FFD0D9;">
+    <h1 style="color:#C75A6F;font-size:1.4rem;margin-bottom:8px;">청킹잉글리시 이메일 인증</h1>
+    <p style="color:#555;line-height:1.7;">안녕하세요, <strong>{$name}</strong>님!<br>
+    아래 버튼을 클릭하면 이메일 인증이 완료됩니다.</p>
+    <div style="text-align:center;margin:32px 0;">
+      <a href="{$link}"
+         style="display:inline-block;background:#FF8FA3;color:#fff;text-decoration:none;
+                padding:14px 36px;border-radius:14px;font-size:1rem;font-weight:600;
+                border:2px solid #2D2D2D;box-shadow:4px 4px 0 #2D2D2D;">
+        이메일 인증하기
+      </a>
+    </div>
+    <p style="color:#999;font-size:.82rem;">링크는 24시간 동안 유효합니다.<br>
+    본인이 요청하지 않았다면 이 메일을 무시해주세요.</p>
+  </div>
+</body>
+</html>
+HTML;
+
+    $payload = json_encode([
+        'from'    => MAIL_FROM_NAME . ' <' . MAIL_FROM . '>',
+        'to'      => [$to],
+        'subject' => $subject,
+        'html'    => $html,
+    ]);
+
+    $ch = curl_init('https://api.resend.com/emails');
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_HTTPHEADER     => [
+            'Authorization: Bearer ' . RESEND_API_KEY,
+            'Content-Type: application/json',
+        ],
+        CURLOPT_POSTFIELDS     => $payload,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 10,
+    ]);
+    $res  = curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    return $code === 200 || $code === 201;
+}

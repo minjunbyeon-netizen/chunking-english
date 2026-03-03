@@ -36,6 +36,12 @@ if (!$user || !password_verify($password, $user['password'])) {
     exit;
 }
 
+if (!$user['email_verified']) {
+    http_response_code(403);
+    echo json_encode(['error' => '이메일 인증이 필요합니다. 가입 시 받은 인증 메일을 확인해주세요.']);
+    exit;
+}
+
 // 세션 고정 공격 방지
 session_regenerate_id(true);
 
