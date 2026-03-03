@@ -22,12 +22,14 @@ foreach ($verbs as &$verb) {
 }
 unset($verb);
 
-// 이미지 경로 → 웹 URL 변환
-function img_url($path) {
+// 경로 → 웹 URL 변환 (이미지/오디오 공통)
+function asset_url($path) {
     if (!$path) return null;
     $parts = explode('/', str_replace('\\', '/', $path));
     return '/03_chunking/' . implode('/', array_map('rawurlencode', $parts));
 }
+function img_url($path)   { return asset_url($path); }
+function audio_url($path) { return asset_url($path); }
 
 $prev_day = $day_num > 1  ? $day_num - 1 : null;
 $next_day = $day_num < 50 ? $day_num + 1 : null;
@@ -232,41 +234,60 @@ $next_day = $day_num < 50 ? $day_num + 1 : null;
     <script>
     let ttsState = {
         isPlaying:false, isPaused:false, currentSheet:null,
-        sentences:[], currentSentenceIndex:0, repeatCount:0, maxRepeat:7
+        sentences:[], currentSentenceIndex:0, repeatCount:0, maxRepeat:7,
+        currentAudio: null
     };
     const wait = ms => new Promise(r => setTimeout(r, ms));
 
     async function startTTSSequence(btn) {
         const sheet = btn.closest('.sheet');
         window.speechSynthesis.cancel();
+        if (ttsState.currentAudio) { ttsState.currentAudio.pause(); ttsState.currentAudio = null; }
         ttsState = { isPlaying:true, isPaused:false, currentSheet:sheet,
             sentences:Array.from(sheet.querySelectorAll('.magic-card')),
-            currentSentenceIndex:0, repeatCount:0, maxRepeat:7 };
+            currentSentenceIndex:0, repeatCount:0, maxRepeat:7, currentAudio:null };
         btn.style.display = 'none';
         sheet.querySelector('.tts-player-bar').classList.add('active');
         updatePlayerUI(sheet);
         processQueue();
     }
+
     async function processQueue() {
         while (ttsState.isPlaying && ttsState.currentSentenceIndex < ttsState.sentences.length) {
             const card = ttsState.sentences[ttsState.currentSentenceIndex];
-            const text = card.querySelector('.eng-sentence').innerText;
+            const audioUrl = card.dataset.audioUrl;
+            const text     = card.querySelector('.eng-sentence').innerText;
             ttsState.sentences.forEach(c => c.classList.remove('reading'));
             card.classList.add('reading');
             while (ttsState.repeatCount < ttsState.maxRepeat) {
                 if (!ttsState.isPlaying) return;
                 if (ttsState.isPaused) { await wait(200); continue; }
                 updatePlayerUI(ttsState.currentSheet);
-                await speakText(text);
+                if (audioUrl) {
+                    await playMp3(audioUrl);
+                } else {
+                    await speakTTS(text);
+                }
                 ttsState.repeatCount++;
-                await wait(800);
+                await wait(600);
             }
             ttsState.repeatCount = 0;
             ttsState.currentSentenceIndex++;
         }
         stopTTS();
     }
-    function speakText(text) {
+
+    function playMp3(url) {
+        return new Promise(resolve => {
+            const audio = new Audio(url);
+            ttsState.currentAudio = audio;
+            audio.onended = () => resolve();
+            audio.onerror = () => resolve();
+            audio.play().catch(() => resolve());
+        });
+    }
+
+    function speakTTS(text) {
         return new Promise(resolve => {
             const u = new SpeechSynthesisUtterance(text);
             u.lang = 'en-US'; u.rate = 0.85;
@@ -274,25 +295,36 @@ $next_day = $day_num < 50 ? $day_num + 1 : null;
             window.speechSynthesis.speak(u);
         });
     }
+
     function updatePlayerUI(sheet) {
-        const countEl = sheet.querySelector('.current-count');
-        const fillEl  = sheet.querySelector('.progress-fill');
+        const countEl   = sheet.querySelector('.current-count');
+        const fillEl    = sheet.querySelector('.progress-fill');
         const pauseIcon = sheet.querySelector('.pause-btn i');
-        if (countEl) countEl.innerText = ttsState.repeatCount + 1;
-        if (fillEl)  fillEl.style.width = ((ttsState.repeatCount + 1) / ttsState.maxRepeat * 100) + '%';
+        if (countEl)   countEl.innerText = ttsState.repeatCount + 1;
+        if (fillEl)    fillEl.style.width = ((ttsState.repeatCount + 1) / ttsState.maxRepeat * 100) + '%';
         if (pauseIcon) pauseIcon.className = ttsState.isPaused ? 'fa-solid fa-play' : 'fa-solid fa-pause';
     }
+
     function togglePause() {
         ttsState.isPaused = !ttsState.isPaused;
-        ttsState.isPaused ? window.speechSynthesis.pause() : window.speechSynthesis.resume();
+        if (ttsState.currentAudio) {
+            ttsState.isPaused ? ttsState.currentAudio.pause() : ttsState.currentAudio.play();
+        } else {
+            ttsState.isPaused ? window.speechSynthesis.pause() : window.speechSynthesis.resume();
+        }
         updatePlayerUI(ttsState.currentSheet);
     }
+
     function restartTTS() {
         ttsState.repeatCount = 0; ttsState.currentSentenceIndex = 0;
-        window.speechSynthesis.cancel(); updatePlayerUI(ttsState.currentSheet);
+        if (ttsState.currentAudio) { ttsState.currentAudio.pause(); ttsState.currentAudio = null; }
+        window.speechSynthesis.cancel();
+        updatePlayerUI(ttsState.currentSheet);
     }
+
     function stopTTS() {
         ttsState.isPlaying = false;
+        if (ttsState.currentAudio) { ttsState.currentAudio.pause(); ttsState.currentAudio = null; }
         window.speechSynthesis.cancel();
         if (ttsState.currentSheet) {
             ttsState.currentSheet.querySelector('.tts-player-bar').classList.remove('active');
@@ -424,8 +456,10 @@ $next_day = $day_num < 50 ? $day_num + 1 : null;
         </header>
 
         <section class="magic-card-list">
-            <?php foreach ($verb['expressions'] as $ei => $expr): ?>
-            <div class="magic-card">
+            <?php foreach ($verb['expressions'] as $ei => $expr):
+                $aurl = audio_url($expr['audio_path'] ?? null);
+            ?>
+            <div class="magic-card" <?= $aurl ? 'data-audio-url="'.htmlspecialchars($aurl).'"' : '' ?>>
                 <div class="magic-number-tag"><?= $ei + 1 ?></div>
                 <div class="magic-content">
                     <div class="verb-tag"><?= htmlspecialchars($verb['verb_en']) ?></div>
