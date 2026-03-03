@@ -1,3 +1,27 @@
+<?php
+require_once 'config/db.php';
+
+// 활성 지자체 목록 (만료 안된 곳 + 인원 여유 있는 곳)
+$orgs_raw = $pdo->query("
+    SELECT o.id, o.name, o.region,
+           COUNT(u.id) AS user_count, o.max_users
+    FROM organizations o
+    LEFT JOIN users u ON u.org_id = o.id
+    WHERE o.is_active = 1
+      AND (o.expires_at IS NULL OR o.expires_at >= CURDATE())
+    GROUP BY o.id
+    HAVING user_count < o.max_users
+    ORDER BY o.region, o.name
+")->fetchAll();
+
+// 지역 순서 정의
+$region_order = ['서울','부산','대구','인천','광주','대전','울산','세종','경기','강원','충북','충남','전북','전남','경북','경남','제주'];
+$orgs_grouped = [];
+foreach ($orgs_raw as $o) {
+    $orgs_grouped[$o['region']][] = $o;
+}
+uksort($orgs_grouped, fn($a,$b) => array_search($a, $region_order) <=> array_search($b, $region_order));
+?>
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -74,6 +98,50 @@
             border-color: #FF8FA3;
             transform: translateY(-2px);
         }
+
+        /* ── 지자체 드롭다운 ── */
+        .select-wrap {
+            position: relative;
+            margin-bottom: 18px;
+        }
+        .select-wrap::after {
+            content: '';
+            position: absolute;
+            right: 22px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0; height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 8px solid #2D2D2D;
+            pointer-events: none;
+        }
+        .select-box {
+            width: 100%;
+            height: 58px;
+            background-color: #FFFFFF;
+            border: 3px solid #2D2D2D;
+            border-radius: 20px;
+            padding: 0 48px 0 20px;
+            font-size: 1rem;
+            font-family: 'Jua', sans-serif;
+            color: #2D2D2D;
+            cursor: pointer;
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+            transition: all 0.2s;
+        }
+        .select-box:focus {
+            background-color: #FFF5F7;
+            border-color: #FF8FA3;
+            transform: translateY(-2px);
+        }
+        .select-box option { font-family: sans-serif; font-size: .95rem; }
+        .select-box optgroup { font-family: sans-serif; font-size: .88rem; color: #9CA3AF; }
+        /* 미선택 상태 placeholder 색상 */
+        .select-box.placeholder { color: #9CA3AF; }
+
         .hint {
             font-size: .76rem;
             color: #9CA3AF;
@@ -150,7 +218,7 @@
         @media (max-width: 480px) {
             .main-title { font-size: 2.2rem; }
             .login-card { padding: 36px 24px; border-radius: 30px; box-shadow: 8px 8px 0px #2D2D2D; }
-            .input-box { height: 54px; }
+            .input-box, .select-box { height: 54px; }
             .btn-enter { height: 58px; font-size: 1.1rem; }
             .floating-home { bottom: 20px; right: 20px; width: 55px; height: 55px; }
         }
@@ -170,6 +238,20 @@
     <div class="login-card">
         <div class="error-msg"   id="error-msg"></div>
         <div class="success-msg" id="success-msg"></div>
+
+        <label class="field-label">소속 지자체</label>
+        <div class="select-wrap">
+            <select id="org_id" class="select-box placeholder" onchange="this.classList.toggle('placeholder', !this.value)">
+                <option value="">지자체를 선택해주세요</option>
+                <?php foreach ($orgs_grouped as $region => $list): ?>
+                <optgroup label="── <?= $region ?> ──">
+                    <?php foreach ($list as $o): ?>
+                    <option value="<?= $o['id'] ?>"><?= htmlspecialchars($o['name']) ?></option>
+                    <?php endforeach; ?>
+                </optgroup>
+                <?php endforeach; ?>
+            </select>
+        </div>
 
         <label class="field-label">이메일</label>
         <input type="email" id="email" class="input-box" placeholder="이메일 입력" autocomplete="email">
@@ -198,19 +280,21 @@ document.getElementById('password2').addEventListener('keydown', e => {
 });
 
 async function doRegister() {
-    const email     = document.getElementById('email').value.trim();
-    const nickname  = document.getElementById('nickname').value.trim();
-    const password  = document.getElementById('password').value;
-    const password2 = document.getElementById('password2').value;
-    const btn       = document.getElementById('btn-reg');
+    const org_id   = document.getElementById('org_id').value;
+    const email    = document.getElementById('email').value.trim();
+    const nickname = document.getElementById('nickname').value.trim();
+    const password = document.getElementById('password').value;
+    const password2= document.getElementById('password2').value;
+    const btn      = document.getElementById('btn-reg');
 
     hideMessages();
 
+    if (!org_id)             return showError('소속 지자체를 선택해주세요.');
     if (!email)              return showError('이메일을 입력해주세요.');
     if (password.length < 6) return showError('비밀번호는 6자 이상이어야 합니다.');
     if (password !== password2) return showError('비밀번호가 일치하지 않습니다.');
 
-    btn.disabled = true;
+    btn.disabled    = true;
     btn.textContent = '...';
 
     try {
@@ -218,7 +302,7 @@ async function doRegister() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ email, password, nickname }),
+            body: JSON.stringify({ email, password, nickname, org_id: parseInt(org_id) }),
         });
         const data = await res.json();
 
@@ -231,8 +315,10 @@ async function doRegister() {
     } catch {
         showError('서버에 연결할 수 없습니다.');
     } finally {
-        btn.disabled = false;
-        btn.textContent = 'JOIN';
+        if (!document.getElementById('success-msg').style.display || document.getElementById('success-msg').style.display === 'none') {
+            btn.disabled    = false;
+            btn.textContent = 'JOIN';
+        }
     }
 }
 
@@ -247,7 +333,7 @@ function showSuccess(msg) {
     el.style.display = 'block';
 }
 function hideMessages() {
-    document.getElementById('error-msg').style.display = 'none';
+    document.getElementById('error-msg').style.display   = 'none';
     document.getElementById('success-msg').style.display = 'none';
 }
 </script>

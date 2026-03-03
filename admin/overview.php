@@ -203,8 +203,11 @@ nav a.active { color: #fff; border-bottom-color: #fff; }
         <div class="sub">전체 현황 · 파일 동기화</div>
     </div>
     <nav>
+        <a href="dashboard.php">대시보드</a>
         <a href="index.php">Day 목록</a>
         <a href="overview.php" class="active">전체 현황</a>
+        <a href="organizations.php">지자체 관리</a>
+        <a href="users.php">사용자 관리</a>
     </nav>
 </header>
 

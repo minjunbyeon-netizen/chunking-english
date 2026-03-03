@@ -48,6 +48,7 @@ session_regenerate_id(true);
 $_SESSION['user_id']   = $user['id'];
 $_SESSION['user_role'] = $user['role'];
 $_SESSION['nickname']  = $user['nickname'];
+$_SESSION['org_id']    = $user['org_id'];
 
 echo json_encode([
     'success'  => true,

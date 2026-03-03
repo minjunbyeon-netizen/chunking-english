@@ -1188,5 +1188,50 @@
         .catch(() => {});
 })();
 </script>
+
+<!-- ── 조회수 배지 ── -->
+<div id="view-counter" style="
+    display:none;
+    position:fixed; bottom:20px; right:20px; z-index:9999;
+    background:rgba(0,0,0,.62); color:#fff;
+    padding:8px 14px; border-radius:20px;
+    font-size:.8rem; font-family:'Noto Sans KR',sans-serif;
+    backdrop-filter:blur(4px); pointer-events:none;
+    white-space:nowrap; letter-spacing:-.2px;
+"></div>
+
+<script>
+// defer 스크립트(script.js) 실행 후 openDayIntro를 래핑
+// defer 스크립트는 DOMContentLoaded 직전에 실행되므로 DOMContentLoaded 리스너 내에서 안전하게 래핑 가능
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof openDayIntro !== 'function') return;
+
+    const _orig = openDayIntro;
+    window.openDayIntro = function(day) {
+        _orig(day);
+        _recordView(day);
+    };
+});
+
+function _recordView(day) {
+    fetch('/chunking-english/api/stats/record_view.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ day_number: day }),
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data && data.total_views !== undefined) {
+            var badge = document.getElementById('view-counter');
+            if (badge) {
+                badge.textContent = 'Day ' + day + ' · 조회 ' + data.total_views.toLocaleString() + '회';
+                badge.style.display = 'block';
+            }
+        }
+    })
+    .catch(function() {});
+}
+</script>
 </body>
 </html>

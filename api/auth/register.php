@@ -1,8 +1,8 @@
 <?php
 /**
  * POST /api/auth/register.php
- * Body: { email, password, nickname }
- * → 가입 후 인증 이메일 발송, email_verified=0 상태로 저장
+ * Body: { email, password, nickname, org_id }
+ * → 지자체 검증 후 가입, 인증 이메일 발송, email_verified=0 상태로 저장
  */
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
@@ -20,6 +20,7 @@ $data     = json_decode(file_get_contents('php://input'), true);
 $email    = trim($data['email']    ?? '');
 $password = trim($data['password'] ?? '');
 $nickname = trim($data['nickname'] ?? '');
+$org_id   = isset($data['org_id']) ? (int)$data['org_id'] : 0;
 
 // 유효성 검사
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -30,6 +31,34 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 if (strlen($password) < 6) {
     http_response_code(400);
     echo json_encode(['error' => '비밀번호는 6자 이상이어야 합니다.']);
+    exit;
+}
+if (!$org_id) {
+    http_response_code(400);
+    echo json_encode(['error' => '소속 지자체를 선택해주세요.']);
+    exit;
+}
+
+// 지자체 검증 (활성 · 만료 · 인원 초과)
+$stmt = $pdo->prepare("SELECT id, is_active, expires_at, max_users FROM organizations WHERE id = ?");
+$stmt->execute([$org_id]);
+$org = $stmt->fetch();
+
+if (!$org || !$org['is_active']) {
+    http_response_code(400);
+    echo json_encode(['error' => '유효하지 않은 지자체입니다.']);
+    exit;
+}
+if ($org['expires_at'] && strtotime($org['expires_at']) < time()) {
+    http_response_code(400);
+    echo json_encode(['error' => '계약이 만료된 지자체입니다. 담당자에게 문의해주세요.']);
+    exit;
+}
+$cnt_stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE org_id = ?");
+$cnt_stmt->execute([$org_id]);
+if ((int)$cnt_stmt->fetchColumn() >= (int)$org['max_users']) {
+    http_response_code(400);
+    echo json_encode(['error' => '해당 지자체의 가입 가능 인원이 초과되었습니다.']);
     exit;
 }
 
@@ -61,10 +90,10 @@ $hashed  = password_hash($password, PASSWORD_BCRYPT);
 
 // 회원 등록 (미인증 상태)
 $stmt = $pdo->prepare("
-    INSERT INTO users (email, password, nickname, email_verified, verification_token, token_expires_at)
-    VALUES (?, ?, ?, 0, ?, ?)
+    INSERT INTO users (email, password, nickname, email_verified, verification_token, token_expires_at, org_id)
+    VALUES (?, ?, ?, 0, ?, ?, ?)
 ");
-$stmt->execute([$email, $hashed, $nickname ?: null, $token, $expires]);
+$stmt->execute([$email, $hashed, $nickname ?: null, $token, $expires, $org_id]);
 
 // 인증 이메일 발송
 $sent = send_verification_email($email, $nickname ?: $email, $token);
