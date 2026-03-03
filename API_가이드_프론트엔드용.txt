@@ -1,0 +1,133 @@
+================================================================
+  청킹잉글리시 콘텐츠 API 가이드 (프론트엔드 디자이너용)
+================================================================
+
+
+■ 기본 정보
+----------------------------------------------------------------
+- 서버 로컬 주소 : http://localhost/chunking-english/
+- API 엔드포인트 : /chunking-english/api/content/get_day.php
+- 방식           : GET 요청
+- 응답 형식      : JSON
+
+
+■ 데이터 불러오는 방법
+----------------------------------------------------------------
+URL 뒤에 ?day=숫자 를 붙이면 됩니다.
+
+  Day 1 데이터 → http://localhost/chunking-english/api/content/get_day.php?day=1
+  Day 2 데이터 → http://localhost/chunking-english/api/content/get_day.php?day=2
+  Day 5 데이터 → http://localhost/chunking-english/api/content/get_day.php?day=5
+
+브라우저 주소창에 그대로 입력하면 JSON 데이터를 바로 확인할 수 있습니다.
+
+
+■ 응답 데이터 구조
+----------------------------------------------------------------
+{
+  "day": 1,
+  "verbs": [
+    {
+      "verb_en"           : "have",
+      "verb_kr"           : "가지다",
+      "sentence_en"       : "I have a dream.",
+      "sentence_kr"       : "나는 꿈을 가지고 있어.",
+      "sentence_audio_url": "/chunking-english/asset/audio/day 1/01. have/sentence.mp3",
+
+      "expressions": [
+        {
+          "expression_en" : "have a dream",
+          "expression_kr" : "꿈을 가지다",
+          "image_url"     : "/chunking-english/asset/img/day 1/01. have/have_a_dream.png",
+          "audio_url"     : "/chunking-english/asset/audio/day 1/01. have/have_a_dream.mp3"
+        },
+        {
+          "expression_en" : "have a chance",
+          "expression_kr" : "기회를 가지다",
+          "image_url"     : "/chunking-english/asset/img/day 1/01. have/have_a_chance.png",
+          "audio_url"     : null   ← 파일 없으면 null 반환
+        }
+      ]
+    },
+    {
+      "verb_en": "change",
+      ...
+    }
+  ]
+}
+
+※ image_url, audio_url 이 null 이면 해당 파일이 아직 없는 것입니다.
+
+
+■ 자바스크립트 사용 예시
+----------------------------------------------------------------
+
+[ 기본 - Day 1 데이터 불러오기 ]
+
+  const res  = await fetch('/chunking-english/api/content/get_day.php?day=1');
+  const data = await res.json();
+
+  console.log(data.day);    // 1
+  console.log(data.verbs);  // 동사 배열
+
+
+[ 이미지/오디오 URL 꺼내기 ]
+
+  data.verbs.forEach(verb => {
+      verb.expressions.forEach(expr => {
+          console.log(expr.expression_en);  // "have a dream"
+          console.log(expr.image_url);      // 이미지 경로 (없으면 null)
+          console.log(expr.audio_url);      // MP3 경로  (없으면 null)
+      });
+  });
+
+
+[ HTML 이미지 태그에 바로 넣기 ]
+
+  const img = document.querySelector('#my-image');
+  img.src = expr.image_url;   // 이미지 표시
+
+
+[ HTML 오디오 재생 ]
+
+  const audio = new Audio(expr.audio_url);
+  audio.play();
+
+
+[ null 체크 후 안전하게 처리 ]
+
+  if (expr.image_url) {
+      img.src = expr.image_url;
+  } else {
+      img.src = './img/placeholder.png';  // 대체 이미지
+  }
+
+
+■ 필드 설명 요약
+----------------------------------------------------------------
+필드명               | 설명
+---------------------|------------------------------------------
+day                  | 날짜 번호 (1~50)
+verbs                | 해당 날의 동사 목록 (배열)
+verb_en              | 동사 영어
+verb_kr              | 동사 한국어
+sentence_en          | 예문 (영어)
+sentence_kr          | 예문 (한국어)
+sentence_audio_url   | 예문 MP3 URL (없으면 null)
+expressions          | 해당 동사의 표현 목록 (배열)
+expression_en        | 표현 영어
+expression_kr        | 표현 한국어
+image_url            | 표현 이미지 URL (없으면 null)
+audio_url            | 표현 MP3 URL (없으면 null)
+
+
+■ 관리자 페이지 (이미지/MP3 현황 확인)
+----------------------------------------------------------------
+http://localhost/chunking-english/admin/
+
+- Day별 이미지·MP3 등록 현황 확인 가능
+- 파일이 없는 항목은 빨간 표시로 한눈에 확인
+- overview.php 에서 전체 50일 진행도 확인 및 파일 자동 싱크 가능
+
+
+================================================================

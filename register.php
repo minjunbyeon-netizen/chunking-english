@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>로그인 · Chunking English</title>
+    <title>회원가입 · Chunking English</title>
     <link href="https://fonts.googleapis.com/css2?family=Chewy&family=Jua&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -27,39 +27,38 @@
         }
         .wrapper {
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
         .main-title {
             font-family: 'Chewy', cursive;
-            font-size: 3.2rem;
+            font-size: 2.8rem;
             color: #2D2D2D;
             text-align: center;
             line-height: 1.1;
-            margin-bottom: 30px;
+            margin-bottom: 24px;
             text-shadow: 4px 4px 0px #FF8FA3;
-            word-break: keep-all;
         }
         .login-card {
             width: 100%;
             background: #FFFFFF;
             border: 4px solid #2D2D2D;
             border-radius: 40px;
-            padding: 50px 40px;
+            padding: 44px 40px;
             box-shadow: 12px 12px 0px #2D2D2D;
         }
         .field-label {
             display: block;
             color: #2D2D2D;
-            font-size: 1rem;
-            margin-bottom: 10px;
+            font-size: .95rem;
+            margin-bottom: 8px;
             padding-left: 5px;
         }
         .input-box {
             width: 100%;
-            height: 60px;
+            height: 58px;
             background-color: #FFFFFF;
             border: 3px solid #2D2D2D;
             border-radius: 20px;
@@ -68,36 +67,37 @@
             font-family: 'Jua', sans-serif;
             transition: all 0.2s;
             outline: none;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
         .input-box:focus {
             background-color: #FFF5F7;
             border-color: #FF8FA3;
             transform: translateY(-2px);
         }
+        .hint {
+            font-size: .76rem;
+            color: #9CA3AF;
+            margin-top: -14px;
+            margin-bottom: 18px;
+            padding-left: 6px;
+        }
         .btn-enter {
             width: 100%;
-            height: 65px;
+            height: 62px;
             background-color: #FF8FA3;
             color: #FFFFFF;
             border: 3px solid #2D2D2D;
             border-radius: 22px;
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             font-family: 'Chewy', cursive;
             letter-spacing: 1px;
             cursor: pointer;
             box-shadow: 0 6px 0px #2D2D2D;
             transition: all 0.1s;
-            margin-top: 10px;
+            margin-top: 8px;
         }
-        .btn-enter:active {
-            transform: translateY(4px);
-            box-shadow: 0 2px 0px #2D2D2D;
-        }
-        .btn-enter:disabled {
-            opacity: .6;
-            cursor: not-allowed;
-        }
+        .btn-enter:active { transform: translateY(4px); box-shadow: 0 2px 0px #2D2D2D; }
+        .btn-enter:disabled { opacity: .6; cursor: not-allowed; }
         .error-msg {
             display: none;
             background: #fff1f2;
@@ -109,12 +109,20 @@
             margin-bottom: 16px;
             text-align: center;
         }
+        .success-msg {
+            display: none;
+            background: #f0fdf4;
+            border: 2px solid #86efac;
+            border-radius: 12px;
+            padding: 10px 16px;
+            color: #166534;
+            font-size: .88rem;
+            margin-bottom: 16px;
+            text-align: center;
+        }
         .bottom-links {
-            margin-top: 28px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
+            margin-top: 24px;
+            text-align: center;
         }
         .bottom-links a {
             color: #9CA3AF;
@@ -123,10 +131,6 @@
             transition: color 0.2s;
         }
         .bottom-links a:hover { color: #FF5C77; }
-        .divider {
-            color: #D1D5DB;
-            font-size: .8rem;
-        }
         .floating-home {
             position: fixed;
             bottom: 30px; right: 30px;
@@ -138,19 +142,16 @@
             align-items: center;
             justify-content: center;
             box-shadow: 6px 6px 0px #2D2D2D;
-            cursor: pointer;
-            transition: all 0.2s;
-            z-index: 100;
             text-decoration: none;
+            transition: all 0.2s;
         }
         .floating-home:hover { background-color: #FFF5F7; transform: scale(1.05); }
-        .floating-home:active { transform: translateY(3px) scale(0.95); box-shadow: 2px 2px 0px #2D2D2D; }
         .home-icon { width: 30px; height: 30px; fill: #2D2D2D; }
         @media (max-width: 480px) {
-            .main-title { font-size: 2.5rem; margin-bottom: 20px; }
-            .login-card { padding: 40px 25px; border-radius: 30px; box-shadow: 8px 8px 0px #2D2D2D; }
-            .input-box { height: 55px; margin-bottom: 16px; }
-            .btn-enter { height: 60px; font-size: 1.2rem; }
+            .main-title { font-size: 2.2rem; }
+            .login-card { padding: 36px 24px; border-radius: 30px; box-shadow: 8px 8px 0px #2D2D2D; }
+            .input-box { height: 54px; }
+            .btn-enter { height: 58px; font-size: 1.1rem; }
             .floating-home { bottom: 20px; right: 20px; width: 55px; height: 55px; }
         }
     </style>
@@ -164,78 +165,74 @@
 </a>
 
 <div class="wrapper">
-    <h1 class="main-title">chunking english<br>kids&amp;mom</h1>
+    <h1 class="main-title">회원가입</h1>
 
     <div class="login-card">
-        <div class="error-msg" id="error-msg"></div>
+        <div class="error-msg"   id="error-msg"></div>
+        <div class="success-msg" id="success-msg"></div>
 
         <label class="field-label">이메일</label>
         <input type="email" id="email" class="input-box" placeholder="이메일 입력" autocomplete="email">
 
-        <label class="field-label">비밀번호</label>
-        <input type="password" id="password" class="input-box" placeholder="비밀번호 입력" autocomplete="current-password">
+        <label class="field-label">닉네임</label>
+        <input type="text"  id="nickname" class="input-box" placeholder="닉네임 입력 (선택)">
 
-        <button class="btn-enter" id="btn-login" onclick="doLogin()">ENTER</button>
+        <label class="field-label">비밀번호</label>
+        <input type="password" id="password" class="input-box" placeholder="비밀번호 입력">
+        <p class="hint">6자 이상</p>
+
+        <label class="field-label">비밀번호 확인</label>
+        <input type="password" id="password2" class="input-box" placeholder="비밀번호 재입력">
+
+        <button class="btn-enter" id="btn-reg" onclick="doRegister()">JOIN</button>
 
         <div class="bottom-links">
-            <a href="register.php">아직 계정이 없으신가요? 회원가입</a>
-            <a href="find_password.php">비밀번호 찾기</a>
+            <a href="login.php">이미 계정이 있으신가요? 로그인</a>
         </div>
     </div>
 </div>
 
 <script>
-// 이미 로그인 상태면 메인으로
-fetch('/chunking-english/api/auth/check.php', { credentials: 'include' })
-    .then(r => r.json())
-    .then(d => { if (d.logged_in) location.href = '/chunking-english/index.php'; });
-
-// Enter 키 지원
-document.getElementById('password').addEventListener('keydown', e => {
-    if (e.key === 'Enter') doLogin();
-});
-document.getElementById('email').addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('password').focus();
+document.getElementById('password2').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doRegister();
 });
 
-async function doLogin() {
-    const email    = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const btn      = document.getElementById('btn-login');
-    const errEl    = document.getElementById('error-msg');
+async function doRegister() {
+    const email     = document.getElementById('email').value.trim();
+    const nickname  = document.getElementById('nickname').value.trim();
+    const password  = document.getElementById('password').value;
+    const password2 = document.getElementById('password2').value;
+    const btn       = document.getElementById('btn-reg');
 
-    errEl.style.display = 'none';
+    hideMessages();
 
-    if (!email || !password) {
-        showError('이메일과 비밀번호를 입력해주세요.');
-        return;
-    }
+    if (!email)              return showError('이메일을 입력해주세요.');
+    if (password.length < 6) return showError('비밀번호는 6자 이상이어야 합니다.');
+    if (password !== password2) return showError('비밀번호가 일치하지 않습니다.');
 
     btn.disabled = true;
     btn.textContent = '...';
 
     try {
-        const res  = await fetch('/chunking-english/api/auth/login.php', {
+        const res  = await fetch('/chunking-english/api/auth/register.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ email, password, nickname }),
         });
         const data = await res.json();
 
         if (res.ok) {
-            // 관리자면 admin 페이지로, 일반 유저면 메인으로
-            location.href = data.role === 'admin'
-                ? '/chunking-english/admin/'
-                : '/chunking-english/index.php';
+            showSuccess('가입 완료! 로그인 페이지로 이동합니다...');
+            setTimeout(() => location.href = '/chunking-english/login.php', 1400);
         } else {
-            showError(data.error || '로그인에 실패했습니다.');
+            showError(data.error || '회원가입에 실패했습니다.');
         }
     } catch {
         showError('서버에 연결할 수 없습니다.');
     } finally {
         btn.disabled = false;
-        btn.textContent = 'ENTER';
+        btn.textContent = 'JOIN';
     }
 }
 
@@ -243,6 +240,15 @@ function showError(msg) {
     const el = document.getElementById('error-msg');
     el.textContent = msg;
     el.style.display = 'block';
+}
+function showSuccess(msg) {
+    const el = document.getElementById('success-msg');
+    el.textContent = msg;
+    el.style.display = 'block';
+}
+function hideMessages() {
+    document.getElementById('error-msg').style.display = 'none';
+    document.getElementById('success-msg').style.display = 'none';
 }
 </script>
 </body>

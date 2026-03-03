@@ -104,12 +104,27 @@
 
             <div class="main-menu-dropdown__inner">
 
-                <a href="./login.php" class="main-menu-item">
+                <a href="./login.php" id="menu-login-link" class="main-menu-item">
                     <div class="main-menu-item__icon main-menu-item__icon--pink">
                         <i class="fa-solid fa-arrow-right-to-bracket"></i>
                     </div>
                     <span class="main-menu-text">로그인</span>
                 </a>
+
+                <div id="menu-user-area" style="display:none;">
+                    <div class="main-menu-item" style="cursor:default;">
+                        <div class="main-menu-item__icon main-menu-item__icon--pink">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <span class="main-menu-text" id="menu-nickname" style="font-size:.82rem;"></span>
+                    </div>
+                    <button type="button" id="menu-logout-btn" class="main-menu-item" style="width:100%;background:none;border:none;cursor:pointer;text-align:left;padding:0;">
+                        <div class="main-menu-item__icon main-menu-item__icon--pink">
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        </div>
+                        <span class="main-menu-text">로그아웃</span>
+                    </button>
+                </div>
 
                 <div class="main-menu-divider"></div>
 
@@ -1153,5 +1168,25 @@
 
     </div>
 </div>
+
+<script>
+(function () {
+    fetch('/chunking-english/api/auth/check.php', { credentials: 'include' })
+        .then(r => r.json())
+        .then(d => {
+            if (d.logged_in) {
+                document.getElementById('menu-login-link').style.display = 'none';
+                const area = document.getElementById('menu-user-area');
+                area.style.display = '';
+                document.getElementById('menu-nickname').textContent = d.nickname || d.email || '사용자';
+                document.getElementById('menu-logout-btn').addEventListener('click', async () => {
+                    await fetch('/chunking-english/api/auth/logout.php', { method: 'POST', credentials: 'include' });
+                    location.href = '/chunking-english/login.php';
+                });
+            }
+        })
+        .catch(() => {});
+})();
+</script>
 </body>
 </html>
