@@ -214,31 +214,39 @@ mysql -u root --default-character-set=utf8mb4 chunking_english < database/data.s
 
 ## 이미지 자산 현황
 
+> DB 전체: 5,250개 표현 (Day 1~201, 한국어 동사 포함)
+> 이미지 폴더: Day 1~50 기준 global 1~150 (영어 동사)
+
 | 항목 | 수치 |
 |------|------|
-| 필요 이미지 | 1,050개 |
-| DB 매핑 성공 | **999개** |
-| DB NULL (미매핑) | 51개 |
-| ~~원인① 파일명 숫자 오류~~ | ~~23개~~ → **수정 완료** |
-| 원인② 이미지 자체 누락 | 23개 |
+| 이미지 폴더 내 전체 파일 | ~1,050개 |
+| DB 매핑 성공 | **836개** |
+| DB NULL (미매핑) | 214개 |
+| ~~원인① 파일명 숫자 오류~~ | ~~23개~~ → ✅ 수정 완료 (2026-03-05) |
+| 원인② 이미지 자체 누락 | ~25개 (listen to 7, speak 7, do yoga 1 등) |
+| 원인③ DB 내용 변경으로 불일치 | ~7개 (improve) |
+| 원인④ Day 42~50 신규 콘텐츠 | ~189개 (global 154~186, 이미지 미제작) |
 
-### 파일명 숫자 오류 목록 (수정 필요)
-| Day | 동사 | 문제 파일 (숫자 제거 필요) |
-|-----|------|--------------------------|
-| Day 5 | plant | plant_the_tree_50.png 외 6개 |
-| Day 5 | keep | keep_strong_60.png 외 6개 |
-| Day 4 | think in | think_in_Korean_37.png |
-| Day 10 | be | be_proud_57.png 외 6개 |
-| 미확인 | fix | fix_the_topic_119.png |
+### ✅ 완료: 파일명 숫자 오류 23개 수정 (2026-03-05)
+| Day | 동사 폴더 | 처리 |
+|-----|-----------|------|
+| Day 5 | 14. plant | ✅ _숫자 제거 + DB 업데이트 (7개) |
+| Day 5 | 15. keep  | ✅ _숫자 제거 + DB 업데이트 (7개) |
+| Day 4 | 12. think in | ✅ think_in_Korean_37 → think_in_Korean (1개) |
+| Day 10 | 30. be | ✅ _숫자 제거 + DB 업데이트 (7개) |
+| Day 47 | 141. fix | ✅ fix_the_topic_119 → fix_the_topic (1개) |
 
 ### 이미지 누락 목록 (제작 필요)
-| Day | 동사 폴더 | 누락 수 |
-|-----|-----------|---------|
-| Day 14 | 42. do | 1개 |
-| Day 29 | 86. listen to | **7개 전부** |
-| Day 31 | 93. read | **7개 전부** |
-| Day 34 | 100. speak | **7개 전부** |
-| Day 47 | 140. be | 1개 |
+| Day | 동사 폴더 | 누락 수 | 비고 |
+|-----|-----------|---------|------|
+| Day 8  | 25. improve | 7개 | DB 표현 변경으로 기존 이미지 불일치 |
+| Day 12 | 42. do | 1개 | do yoga.png 미존재 |
+| Day 20 | 72. pack | 1개 | pack_the_lunch.png 미존재 |
+| Day 24 | 86. listen to | 7개 | 폴더 비어있음 |
+| Day 25 | 88. arrive at | 1개 | arrive_at_the_office.png 미존재 |
+| Day 28 | 100. speak | 7개 | 폴더 비어있음 |
+| Day 38 | 140. be | 1개 | be_dishonest.png 미존재 |
+| Day 42~50 | global 154~186 | ~189개 | 신규 콘텐츠, 이미지 미제작 |
 
 ---
 
