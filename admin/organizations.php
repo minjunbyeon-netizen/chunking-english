@@ -330,7 +330,12 @@ tbody tr:hover td { background: #fdf8f9; }
                 </div>
                 <div class="field">
                     <label>지역 (선택)</label>
-                    <input type="text" name="region" value="<?= htmlspecialchars($edit_org['region'] ?? '') ?>" placeholder="예: 서울">
+                    <select name="region">
+                        <option value="">-- 선택 --</option>
+                        <?php foreach ($region_order as $r): ?>
+                            <option value="<?= $r ?>" <?= ($edit_org['region'] ?? '') === $r ? 'selected' : '' ?>><?= $r ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
                 <div class="field">
                     <label>허가코드 *</label>
