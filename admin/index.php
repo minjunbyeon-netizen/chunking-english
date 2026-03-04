@@ -318,6 +318,13 @@ tbody tr:hover .vcell { background: #faeef1; }
             <div class="dh-stats">
                 <span class="spill <?= $i_cls ?>">이미지 <?= $i_ok ?>/<?= $day['total'] ?></span>
                 <span class="spill <?= $a_cls ?>">MP3 <?= $a_ok ?>/<?= $day['total'] ?></span>
+                <?php if ($a_ok > 0): ?>
+                <a href="../api/download/day_audio.php?day=<?= $dn ?>"
+                   onclick="event.stopPropagation()"
+                   style="font-size:.72rem;padding:3px 9px;border-radius:4px;border:1px solid #bbf7d0;background:#f0fdf4;color:#166534;text-decoration:none;white-space:nowrap;">
+                    ↓ MP3
+                </a>
+                <?php endif; ?>
             </div>
         </div>
 
