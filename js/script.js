@@ -1763,6 +1763,14 @@ function finishVerb() {
     switchView('intro');
 
     if (completedCount >= totalCount) {
+        // DB에 완료 저장
+        fetch('api/progress/save.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'same-origin',
+            body: JSON.stringify({day_number: currentDay})
+        }).catch(e => console.warn('progress save failed', e));
+
         pendingTreeModal = true;
         justCompletedDay = true;
         setTimeout(() => {

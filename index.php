@@ -1,3 +1,91 @@
+<?php
+session_start();
+require_once 'config/db.php';
+
+// ── DB에서 Day 1~50 전체 데이터 로드 ──────────────────────────────────────────
+$stmt = $pdo->query("
+    SELECT d.day_number,
+           v.id AS verb_id, v.global_num, v.verb_en, v.verb_kr,
+           v.sentence_en, v.sentence_kr, v.order_num AS verb_order,
+           e.order_num AS expr_order, e.expression_en, e.expression_kr,
+           e.image_path, e.audio_path
+    FROM days d
+    JOIN verbs v ON v.day_id = d.id
+    JOIN expressions e ON e.verb_id = v.id
+    WHERE d.day_number BETWEEN 1 AND 50
+      AND d.is_active = 1
+      AND v.verb_en REGEXP '^[a-zA-Z]'
+    ORDER BY d.day_number, v.order_num, e.order_num
+");
+$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// ── 이미지/오디오 URL 헬퍼 ──────────────────────────────────────────────────────
+function chunk_url(?string $path): ?string {
+    if (!$path) return null;
+    $clean = str_replace('\\', '/', $path);
+    if (!file_exists(__DIR__ . '/' . $clean)) return null;
+    $parts = explode('/', $clean);
+    return './' . implode('/', array_map('rawurlencode', $parts));
+}
+
+// ── levelData / masterChunkData 빌드 ─────────────────────────────────────────
+$levelData      = [];
+$masterChunkData = [];
+$seenVerbs = []; // day_number+verb_id 중복 방지
+
+foreach ($rows as $row) {
+    $day     = (int)$row['day_number'];
+    $verbKey = strtolower($row['verb_en']) . $row['global_num']; // 고유 키 (have1, change2…)
+
+    // levelData 구성
+    if (!isset($levelData[$day])) {
+        $levelData[$day] = [
+            'ride'  => "Day {$day}",
+            'title' => "Day {$day}",
+            'verbs' => []
+        ];
+    }
+    if (!in_array($verbKey, $levelData[$day]['verbs'])) {
+        $levelData[$day]['verbs'][] = $verbKey;
+    }
+
+    // masterChunkData 구성
+    if (!isset($masterChunkData[$verbKey])) {
+        $masterChunkData[$verbKey] = [];
+    }
+    $masterChunkData[$verbKey][] = [
+        'eng'   => $row['expression_en'],
+        'kor'   => $row['expression_kr'] ?? '',
+        'image' => chunk_url($row['image_path']) ?? './img/exc_n1.png',
+        'audio' => chunk_url($row['audio_path']),
+    ];
+}
+
+// ── 완료 Day 로드 (로그인 시 DB, 비로그인 시 빈 배열) ───────────────────────
+$completedDays = [];
+if (!empty($_SESSION['user_id'])) {
+    $ps = $pdo->prepare("
+        SELECT d.day_number FROM progress p
+        JOIN days d ON p.day_id = d.id
+        WHERE p.user_id = ? AND p.completed = 1
+    ");
+    $ps->execute([$_SESSION['user_id']]);
+    $completedDays = array_column($ps->fetchAll(PDO::FETCH_ASSOC), 'day_number');
+}
+
+$serverData = [
+    'levelData'       => $levelData,
+    'masterChunkData' => $masterChunkData,
+    'iconMap'         => (object)[],   // JS 코드에서 기본 아이콘 사용
+    'progress'        => [
+        'unlockedDays'    => 50,        // 전체 Day 열람 허용
+        'completedVerbs'  => [],
+        'completedDays'   => $completedDays,
+        'stationProgress' => [1=>1,2=>1,3=>1,4=>1,5=>1,6=>1,7=>1,8=>1,9=>1],
+    ],
+];
+$serverDataJson = json_encode($serverData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+?>
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -35,59 +123,7 @@
     <script src="js/script.js" defer></script>
 
     <script>
-        window.SERVER_DATA = {
-            levelData: {
-                1: {
-                    ride: "Hope & Practice",
-                    title: "희망 & 실천",
-                    verbs: ["have", "change", "start"]
-                }
-            },
-
-            masterChunkData: {
-                "have": [
-                    { eng: "have a dream",   kor: "가지다 꿈을",        image: "./img/have_a_dream.png" },
-                    { eng: "have a chance",  kor: "가지다 기회를",      image: "./img/have_a_chance.png" },
-                    { eng: "have a feeling", kor: "가지다 감정을",      image: "./img/have_a_feeling.png" },
-                    { eng: "have a goal",    kor: "가지다 목표를",      image: "./img/have_a_goal.png" },
-                    { eng: "have a hope",    kor: "가지다 희망을",      image: "./img/have_a_hope.png" },
-                    { eng: "have an idea",   kor: "가지다 아이디어를",  image: "./img/have_an_idea.png" },
-                    { eng: "have a wish",    kor: "가지다 소망을",      image: "./img/have_a_wish.png" }
-                ],
-
-                "change": [
-                    { eng: "change the life",   kor: "바꾸다 생활을",    image: "./img/change_the_life.png" },
-                    { eng: "change the future", kor: "바꾸다 미래를",    image: "./img/change_the_future.png" },
-                    { eng: "change the mind",   kor: "바꾸다 마음을",    image: "./img/change_the_mind.png" },
-                    { eng: "change the plan",   kor: "바꾸다 계획을",    image: "./img/change_the_plan.png" },
-                    { eng: "change the date",   kor: "바꾸다 날짜를",    image: "./img/change_the_date.png" },
-                    { eng: "change the place",  kor: "바꾸다 장소를",    image: "./img/change_the_place.png" },
-                    { eng: "change the time",   kor: "바꾸다 시간을",    image: "./img/change_the_time.png" }
-                ],
-
-                "start": [
-                    { eng: "start the trip",    kor: "시작하다 여행을",  image: "./img/start_the_trip.png" },
-                    { eng: "start the journey", kor: "시작하다 여행을",  image: "./img/start_the_journey.png" },
-                    { eng: "start the class",   kor: "시작하다 수업을",  image: "./img/start_the_class.png" },
-                    { eng: "start the lesson",  kor: "시작하다 수업을",  image: "./img/start_the_lesson.png" },
-                    { eng: "start the day",     kor: "시작하다 하루를",  image: "./img/start_the_day.png" },
-                    { eng: "start the game",    kor: "시작하다 경기를",  image: "./img/start_the_game.png" },
-                    { eng: "start the match",   kor: "시작하다 경기를",  image: "./img/start_the_match.png" }
-                ]
-            },
-
-            iconMap: {
-                have: "fa-solid fa-heart",
-                change: "fa-solid fa-star",
-                start: "fa-solid fa-seedling"
-            },
-
-            progress: {
-                unlockedDays: 1,
-                completedVerbs: [],
-                stationProgress: { 1:1,2:1,3:1,4:1,5:1,6:1,7:1,8:1,9:1 }
-            }
-        };
+        window.SERVER_DATA = <?= $serverDataJson ?>;
     </script>
 
 </head>
