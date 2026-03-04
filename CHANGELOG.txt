@@ -1,0 +1,324 @@
+================================================================
+  청킹잉글리시 (Chunking English) — 작업 이력
+  프로젝트: https://github.com/minjunbyeon-netizen/chunking-english
+  작성일: 2026-03-04
+================================================================
+
+
+----------------------------------------------------------------
+[커밋 #1]  20f96d2  Initial commit - 청킹잉글리시 프로젝트
+----------------------------------------------------------------
+작업일  : 2026-03-03
+작업내용:
+  - 프론트엔드 완성본 이식
+      index.php     : 기차역 UI 메인 학습 화면 (Tailwind + 커스텀 JS)
+      book.php      : Day별 표현 학습 페이지
+      login.php     : 로그인 페이지
+      register.php  : 회원가입 페이지 (정적)
+      together.html : 함께하기 페이지
+      tree.php      : 학습 트리 페이지
+      notice.php    : 공지 페이지
+      board.php     : 게시판 페이지
+
+  - 백엔드 기초 구축
+      config/db.php           : PDO MySQL 연결
+      config/db.example.php   : 환경 설정 예시
+      api/auth/login.php      : 로그인 API
+      api/auth/register.php   : 회원가입 API (기초)
+      api/auth/logout.php     : 로그아웃 API
+      api/auth/check.php      : 세션 확인 API
+      api/content/get_day.php : Day 콘텐츠 조회 API
+      api/progress/save.php   : 진도 저장 API
+      api/progress/my_tree.php: 내 트리 조회 API
+
+  - DB 스키마 및 초기 데이터
+      database/schema.sql : 테이블 정의
+      database/data.sql   : 50일치 콘텐츠 데이터 (50일·150동사·1050표현)
+      database/import.py  : 엑셀→DB 임포트 스크립트
+
+  - 자산
+      css/style.css       : 전체 스타일
+      js/script.js        : 메인 학습 로직 (~2900줄)
+      js/tailwind-config.js
+      js/fonts.js
+      img/                : 표현 이미지 34장
+
+  - 문서
+      README.md           : 프로젝트 개요
+      WORKTHROUGH.md      : 단계별 구현 가이드
+
+
+----------------------------------------------------------------
+[커밋 #2]  b9b61a8  book.php 동적 DB 연결 및 한글 인코딩 수정
+----------------------------------------------------------------
+작업일  : 2026-03-03
+작업내용:
+  - book.php 정적 HTML → 동적 PHP로 전환
+      · MySQL DB 연동, ?day=N 파라미터로 Day 네비게이션
+  - database/import.py : SET NAMES utf8mb4 추가 → 한글 깨짐 방지
+  - database/data.sql  : utf8mb4 포함 재생성 (50일·150동사·1050표현)
+  - check_mapping.php  : 이미지 매핑 현황 시각 확인 페이지 추가
+  - .gitignore         : 자동생성 캐시 파일 제외
+
+
+----------------------------------------------------------------
+[커밋 #3]  35e6d72  README 현재 상태 전면 업데이트
+----------------------------------------------------------------
+작업일  : 2026-03-03
+작업내용:
+  - README.md 전면 재작성
+      · Phase 1 완료 항목 체크 반영
+      · DB 스키마, 파일 구조, 세팅 방법 최신화
+      · 남은 Phase 2~4 작업 목록 정리
+      · 이미지 현황 및 기술 이슈 기록
+
+
+----------------------------------------------------------------
+[커밋 #4]  e8b22f2  MP3 오디오 재생 추가 (gTTS Day 1-5)
+----------------------------------------------------------------
+작업일  : 2026-03-03
+작업내용:
+  - database/generate_audio.py
+      · gTTS로 표현 MP3 배치 생성
+      · "I {expression}." 형식 TTS
+      · 저장 경로: asset/audio/day N/NN. verb/expression.mp3
+      · 생성 후 DB expressions.audio_path 자동 업데이트
+
+  - book.php 오디오 재생 개선
+      · MP3 우선 재생, 없으면 Web Speech API 폴백
+      · magic-card에 data-audio-url 속성 추가
+      · pause/stop이 MP3·TTS 모두 제어
+
+
+----------------------------------------------------------------
+[커밋 #5]  70c6577  TTS 재생 방식 수정
+----------------------------------------------------------------
+작업일  : 2026-03-03
+작업내용:
+  - book.php TTS 재생 로직 변경
+      · 기존: 1문장 × 7회 반복
+      · 변경: 7문장 각 1회 순서대로 재생
+      · 진행바: 반복 횟수 → 현재 문장/전체 문장 번호로 변경
+
+
+----------------------------------------------------------------
+[커밋 #6]  d906116  관리자 페이지 + 로그인 시스템 + ElevenLabs TTS
+----------------------------------------------------------------
+작업일  : 2026-03-03
+작업내용:
+  [관리자 페이지]
+  - admin/_auth.php       : 관리자 세션 인증 가드 (role=admin 체크)
+  - admin/index.php       : Day별 아코디언 콘텐츠 목록
+      · 이미지/MP3 현황 배지 (ok/warn/err)
+      · 카테고리 구분 (Hope & Practice 등 9개 카테고리)
+      · 표현 인라인 테이블, 썸네일, MP3 재생 버튼
+  - admin/overview.php    : 전체 50일 현황 그리드 + 파일 싱크 기능
+      · asset/img, asset/audio 폴더 스캔 → DB 경로 자동 갱신
+
+  [로그인 시스템]
+  - login.php             : 이메일 기반 로그인 (fetch API 연동)
+  - api/auth/login.php    : PDO + password_verify + 세션 저장
+
+  [TTS]
+  - database/generate_audio_elevenlabs.py
+      · ElevenLabs API로 고품질 MP3 생성
+      · Day 1~3 총 63개 MP3 생성 (asset/audio/day 1~3/)
+
+  [데이터]
+  - database/import_excel.py : 엑셀 최종본 → DB 전체 교체 임포트
+
+  [기타]
+  - API_가이드_프론트엔드용.txt : 프론트 디자이너용 API 사용 가이드
+  - index.php             : 로그인/로그아웃 동적 메뉴 추가
+
+
+----------------------------------------------------------------
+[커밋 #7]  cdff299  이메일 인증 회원가입 시스템 추가
+----------------------------------------------------------------
+작업일  : 2026-03-03
+작업내용:
+  - api/auth/register.php 개선
+      · 가입 시 email_verified=0 저장
+      · Resend API로 HTML 인증 이메일 발송
+      · 미인증 계정 재가입 시 인증 메일 재발송
+  - verify_email.php      : 토큰 검증 → 인증 완료 처리 페이지
+  - api/auth/login.php    : 미인증 계정 로그인 차단 (HTTP 403)
+  - register.php (front)  : 가입 후 이메일 인증 안내 메시지 표시
+
+  [DB 추가 컬럼 (users)]
+  - email_verified      TINYINT(1) DEFAULT 0
+  - verification_token  VARCHAR(64)
+  - token_expires_at    DATETIME
+
+
+----------------------------------------------------------------
+[커밋 #8]  0590853  관리자 대시보드 + 지자체 허가코드 시스템
+----------------------------------------------------------------
+작업일  : 2026-03-04
+작업내용:
+  [DB 변경]
+  - organizations 테이블 신규
+      id, name, region, license_code(UNIQUE), max_users,
+      expires_at, is_active, note, created_at
+  - page_views 테이블 신규
+      id, day_number, user_id, org_id, viewed_at
+      (INDEX: idx_day, idx_org, idx_date)
+  - users.org_id 컬럼 추가 (FK → organizations)
+
+  [관리자 페이지 신규]
+  - admin/dashboard.php
+      · 요약 카드 4개: 총 가입자 / 오늘 접속 / 활성 지자체 / 이번달 신규
+      · 지자체별 사용자 현황 테이블 (가입자 순 상위 15개)
+      · 인기 Day TOP 10 가로 바차트
+      · 최근 가입자 10명
+  - admin/organizations.php
+      · 지역별 아코디언 목록 (서울·부산·... ·제주)
+      · 지자체명/코드 실시간 검색 + 지역 드롭다운 필터
+      · 허가코드 8자리 자동 생성 (브라우저 JS)
+      · 추가/수정 인라인 폼, 비활성화 토글
+  - admin/users.php
+      · 전체 사용자 목록
+      · 지역별 optgroup 지자체 드롭다운 필터
+      · 미인증 사용자 수동 인증 버튼
+
+  [API 신규]
+  - api/stats/record_view.php
+      · POST { day_number }
+      · 세션에서 user_id, org_id 추출 → page_views INSERT
+      · 해당 Day 총 조회수 반환
+
+  [수정]
+  - register.php
+      · 허가번호 텍스트 입력 → 지자체 드롭다운 선택으로 변경
+      · PHP로 DB에서 활성 지자체 로드 (만료·인원초과 자동 제외)
+      · 지역별 <optgroup> 그룹핑 (229개 지자체)
+  - api/auth/register.php
+      · license_code → org_id 기반 검증으로 변경
+      · 검증 순서: 존재 → is_active → 만료일 → 인원초과
+  - api/auth/login.php
+      · $_SESSION['org_id'] 저장 추가
+  - index.php
+      · openDayIntro() 후킹 → record_view.php POST 호출
+      · 우하단 고정 배지 "Day N · 조회 X회" 표시
+  - admin/index.php, admin/overview.php
+      · nav 탭 5개로 확장:
+        [대시보드] [Day 목록] [전체 현황] [지자체 관리] [사용자 관리]
+
+  [지자체 시드 데이터]
+  - 전국 기초자치단체 230개 전체 등록
+    서울 25 / 부산 16 / 대구 9 / 인천 10 / 광주 5 / 대전 5 /
+    울산 5 / 세종 1 / 경기 31 / 강원 18 / 충북 11 / 충남 15 /
+    전북 14 / 전남 22 / 경북 22 / 경남 18 / 제주 3
+    총 계약 인원: 20,940명
+
+
+----------------------------------------------------------------
+[커밋 #9]  fe2339f  DB 마이그레이션 파일 정리
+----------------------------------------------------------------
+작업일  : 2026-03-04
+작업내용:
+  - database/schema.sql 전면 최신화
+      · 전체 테이블 8개 정의 (FK, INDEX 포함)
+      · Migration 002 반영 (organizations, page_views, users.org_id)
+  - database/migrations/ 디렉토리 신설
+      001_initial.sql           : 초기 스키마 이력화
+      002_b2b_organizations.sql : 지자체 시스템 마이그레이션 + 롤백 SQL
+      README.md                 : 적용 방법 및 이력 표
+
+
+================================================================
+  현재 DB 상태 (2026-03-04 기준)
+================================================================
+
+  테이블           레코드 수
+  ──────────────────────────
+  days             201개
+  verbs            750개
+  expressions    5,212개
+  organizations    230개  (전국 기초자치단체)
+  page_views         0개  (서비스 오픈 전)
+  users              0개  (서비스 오픈 전)
+  expression_progress 0개
+  progress           0개
+
+
+================================================================
+  파일 구조 (2026-03-04 기준)
+================================================================
+
+  chunking-english/
+  ├── index.php               메인 학습 화면 (기차역 UI)
+  ├── book.php                Day별 표현 학습
+  ├── login.php               로그인
+  ├── register.php            회원가입 (지자체 드롭다운)
+  ├── verify_email.php        이메일 인증
+  ├── find_password.php       비밀번호 찾기
+  ├── notice.php / board.php  공지·게시판
+  ├── tree.php                학습 트리
+  │
+  ├── admin/
+  │   ├── _auth.php           관리자 세션 가드
+  │   ├── dashboard.php       통계 대시보드  ← NEW
+  │   ├── index.php           Day 목록
+  │   ├── overview.php        전체 현황 + 파일 싱크
+  │   ├── organizations.php   지자체 관리   ← NEW
+  │   └── users.php           사용자 관리   ← NEW
+  │
+  ├── api/
+  │   ├── auth/
+  │   │   ├── check.php
+  │   │   ├── login.php
+  │   │   ├── logout.php
+  │   │   └── register.php
+  │   ├── content/
+  │   │   └── get_day.php
+  │   ├── progress/
+  │   │   ├── my_tree.php
+  │   │   └── save.php
+  │   └── stats/
+  │       └── record_view.php  ← NEW
+  │
+  ├── config/
+  │   ├── db.php
+  │   └── db.example.php
+  │
+  ├── database/
+  │   ├── schema.sql
+  │   ├── data.sql
+  │   ├── migrations/
+  │   │   ├── README.md
+  │   │   ├── 001_initial.sql
+  │   │   └── 002_b2b_organizations.sql
+  │   ├── import.py
+  │   ├── import_excel.py
+  │   ├── generate_audio.py
+  │   └── generate_audio_elevenlabs.py
+  │
+  ├── css/style.css
+  ├── js/
+  │   ├── script.js
+  │   ├── tailwind-config.js
+  │   └── fonts.js
+  ├── asset/
+  │   ├── img/day 1~50/
+  │   └── audio/day 1~3/      (ElevenLabs MP3 63개)
+  │
+  ├── CHANGELOG.txt           ← THIS FILE
+  ├── README.md
+  └── WORKTHROUGH.md
+
+
+================================================================
+  남은 작업 (TODO)
+================================================================
+
+  [ ] 배포 서버 세팅 (Apache VirtualHost / Nginx)
+  [ ] HTTPS 적용 (Let's Encrypt)
+  [ ] asset/audio Day 4~50 MP3 생성 (ElevenLabs)
+  [ ] 학습 진도 저장 기능 (progress 테이블 연동)
+  [ ] 비밀번호 찾기 이메일 발송 연동
+  [ ] 관리자 → 지자체 계약 갱신 (만료일 일괄 연장) 기능
+  [ ] 지자체별 학습 통계 리포트 (CSV 내보내기)
+  [ ] 모바일 반응형 최적화
+
+================================================================
