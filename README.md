@@ -32,38 +32,80 @@ asset/img/day {N}/{GV:02d}. {verb_en}/{expression_snake}.png
 ## 파일 구조
 
 ```
-03_chunking/
-├── book.php              ← A4 학습지 뷰어 (동적 PHP, ?day=N 파라미터)
-├── index.php             ← 메인 페이지 (정적, DB 연동 예정)
-├── login.php             ← 로그인 UI (API 연결 예정)
-├── find_password.php     ← 비밀번호 찾기 UI
-├── board.php             ← 커뮤니티 게시판 UI
-├── notice.php            ← 공지사항 UI
+chunking-english/
+├── index.php             ← 메인 학습 페이지 (Day 선택 + 드릴 + 조회수 배지)
+├── book.php              ← A4 학습지 뷰어 (?day=N)
+├── register.php          ← 회원가입 (지자체 드롭다운 선택)
+├── login.php             ← 로그인
+├── verify_email.php      ← 이메일 인증
+├── find_password.php     ← 비밀번호 찾기
+├── board.php             ← 커뮤니티 게시판
+├── notice.php            ← 공지사항
 ├── tree.php              ← My English Tree (게이미피케이션)
 ├── together.html         ← 함께하기 페이지
-├── check_mapping.php     ← 이미지 매핑 시각 확인 도구 (?day=N)
-├── config/
-│   ├── db.php            ← DB 연결 설정 (gitignore - 개인 설정)
-│   └── db.example.php    ← DB 연결 템플릿 (복사해서 db.php로 사용)
+├── check_mapping.php     ← 이미지 매핑 시각 확인 (?day=N)
+│
+├── admin/
+│   ├── _auth.php         ← 관리자 인증 미들웨어
+│   ├── index.php         ← Day 목록 관리
+│   ├── overview.php      ← 전체 현황
+│   ├── dashboard.php     ← 통계 대시보드 (신규 가입·조회수·지자체별 현황)
+│   ├── organizations.php ← 지자체 관리 (허가코드 발급·활성화 토글)
+│   └── users.php         ← 사용자 관리 (수동 인증·지자체 필터)
+│
 ├── api/
-│   ├── content/
-│   │   └── get_day.php        ← GET ?day=N → 동사+표현 JSON 반환
 │   ├── auth/
-│   │   ├── login.php          ← POST {email, password}
-│   │   ├── register.php       ← POST {email, password, nickname}
-│   │   ├── logout.php         ← 세션 제거
-│   │   └── check.php          ← 로그인 상태 확인
-│   └── progress/
-│       ├── save.php           ← 학습 완료 저장
-│       └── my_tree.php        ← 완료한 Day 목록 반환 (tree.php 연동)
+│   │   ├── login.php     ← POST {email, password} → 세션 발급
+│   │   ├── register.php  ← POST {email, password, nickname, org_id}
+│   │   ├── logout.php    ← 세션 제거
+│   │   └── check.php     ← 로그인 상태 확인
+│   ├── content/
+│   │   └── get_day.php   ← GET ?day=N → 동사+표현 JSON
+│   ├── progress/
+│   │   ├── save.php      ← 학습 완료 저장
+│   │   └── my_tree.php   ← 완료한 Day 목록 (tree.php 연동)
+│   ├── stats/
+│   │   └── record_view.php ← POST {day_number} → 조회수 기록+반환
+│   └── download/
+│       └── day_audio.php ← GET ?day=N → MP3 ZIP 다운로드
+│
+├── config/
+│   ├── db.php            ← DB 연결 설정 (gitignore)
+│   └── db.example.php    ← DB 연결 템플릿
+│
 ├── database/
-│   ├── schema.sql         ← DB 생성 스크립트 (최초 1회 실행)
-│   ├── import.py          ← Excel → data.sql 파이썬 스크립트
-│   └── data.sql           ← 생성된 SQL 데이터 (50일치, utf8mb4)
+│   ├── schema.sql        ← 전체 DB 생성 스크립트 (최초 1회)
+│   ├── data.sql          ← 콘텐츠 데이터 (50일/150동사/1050표현)
+│   ├── import.py         ← Excel → data.sql 변환 스크립트
+│   ├── import_excel.py   ← 보조 임포트 스크립트
+│   ├── generate_audio.py           ← TTS 오디오 생성 (Web Speech)
+│   ├── generate_audio_elevenlabs.py ← ElevenLabs TTS
+│   ├── generate_audio_typecast.py  ← Typecast TTS (현재 사용)
+│   └── migrations/
+│       ├── 001_initial.sql          ← 초기 스키마
+│       ├── 002_b2b_organizations.sql ← 지자체 허가코드 시스템
+│       ├── fix_image_mapping_20260304.sql
+│       └── README.md
+│
 ├── asset/
-│   ├── 청킹 Basic _20260303.xlsx   ← 원본 콘텐츠 Excel
-│   └── img/               ← 이미지 1.6GB (gitignore, Google Drive 동기화)
-├── css/ js/ img/          ← 기존 프론트엔드 자산
+│   ├── 청킹 Basic _20260303.xlsx    ← 원본 콘텐츠 Excel
+│   ├── audio/                       ← TTS MP3 파일 (day별 폴더)
+│   ├── img/                         ← 이미지 1.6GB (gitignore, Google Drive)
+│   └── chunkingEnglishKidsAndMom_소스코드/  ← 프론트엔드 원본 소스 백업
+│
+├── chunkingEnglishKidsAndMom/  ← 프론트엔드 UI 소스 (Kids&Mom 버전)
+│   ├── index.php / login.php / book.php 등
+│   ├── css/style.css
+│   └── js/ (script.js, fonts.js, tailwind-config.js)
+│
+├── css/style.css         ← 메인 스타일시트
+├── js/script.js          ← 메인 자바스크립트
+├── img/                  ← UI 이미지 자산
+│
+├── CHANGELOG.txt         ← 작업 이력 전체
+├── WORKTHROUGH.md        ← 개발 과정 노트
+├── API_가이드_프론트엔드용.txt
+├── 집_세팅_가이드.txt
 └── .gitignore
 ```
 
@@ -74,10 +116,13 @@ asset/img/day {N}/{GV:02d}. {verb_en}/{expression_snake}.png
 | 테이블 | 내용 |
 |--------|------|
 | `days` | 50일치 날짜 정보 |
-| `verbs` | 동사 150개 (day_id, global_num, verb_en/kr, sentence_en/kr) |
-| `expressions` | 표현 1050개 (verb_id, expression_en/kr, image_path) |
-| `users` | 회원 (email, password bcrypt, nickname, role) |
+| `verbs` | 동사 150개 (day_id, global_num, verb_en/kr, sentence_en/kr, audio) |
+| `expressions` | 표현 1050개 (verb_id, expression_en/kr, image_path, audio_path) |
+| `users` | 회원 (email, bcrypt password, nickname, role, org_id, email_verified) |
 | `progress` | 학습 진도 (user_id, day_id, completed) |
+| `expression_progress` | 표현별 정답 횟수 (user_id, expression_id, correct_count) |
+| `organizations` | 지자체 (name, region, license_code, max_users, expires_at, is_active) |
+| `page_views` | 조회수 로그 (day_number, user_id, org_id, viewed_at) |
 
 **로컬 DB 접속**: root / 비밀번호없음 / localhost / chunking_english
 
@@ -135,16 +180,34 @@ mysql -u root --default-character-set=utf8mb4 chunking_english < database/data.s
 - [x] 한글 인코딩 수정 (SET NAMES utf8mb4)
 - [x] GitHub 연동 + Google Drive 이미지 동기화
 
-### Phase 2 — 프론트엔드 연동 (진행 예정)
-- [ ] login.php UI → api/auth/login.php 연결
-- [ ] index.php 동적화 (DB 연동)
-- [ ] tree.php → api/progress/my_tree.php 연동
+### Phase 2 — B2B 지자체 시스템 ✅ 완료 (2026-03-04)
+- [x] organizations 테이블 + page_views 테이블 생성
+- [x] 전국 230 기초자치단체 시드 데이터 입력
+- [x] register.php 지자체 드롭다운 선택 (optgroup 지역별)
+- [x] api/auth/register.php 지자체 검증 (활성·만료·인원초과)
+- [x] api/auth/login.php org_id 세션 저장
+- [x] api/stats/record_view.php 조회수 기록 API
+- [x] index.php 우하단 조회수 배지 (Day별 실시간)
+- [x] admin/dashboard.php 통계 대시보드
+- [x] admin/organizations.php 지자체 관리 (아코디언+검색)
+- [x] admin/users.php 사용자 관리
+- [x] DB 마이그레이션 파일 정리 (001~002)
 
-### Phase 3 — 이미지 정리 (진행 예정)
-- [ ] 파일명 숫자 오류 23개 수정 (plant/keep/be/think_in/fix 폴더)
+### Phase 3 — TTS 오디오 ✅ 완료 (2026-03-04)
+- [x] Typecast API 연동 generate_audio_typecast.py
+- [x] api/download/day_audio.php MP3 ZIP 다운로드
+- [x] admin/index.php Day별 ↓MP3 ZIP 버튼
+
+### Phase 4 — 이미지 정리
+- [x] 파일명 숫자 오류 23개 수정 (plant/keep/be/think_in/fix 폴더) ✅ 2026-03-05
 - [ ] 누락 이미지 23개 제작 (Day29/31/34/14/47)
 
-### Phase 4 — 배포
+### Phase 5 — 프론트엔드 연동 (진행 예정)
+- [ ] login.php UI → api/auth/login.php 연결
+- [ ] index.php 동적화 완성 (DB 연동)
+- [ ] tree.php → api/progress/my_tree.php 연동
+
+### Phase 6 — 배포
 - [ ] 외부 서버 배포 (Railway 검토 중, Cafe24 비선호)
 
 ---
@@ -154,9 +217,9 @@ mysql -u root --default-character-set=utf8mb4 chunking_english < database/data.s
 | 항목 | 수치 |
 |------|------|
 | 필요 이미지 | 1,050개 |
-| DB 매핑 성공 | **976개** |
-| DB NULL (미매핑) | 74개 |
-| 원인① 파일명 숫자 오류 | 23개 |
+| DB 매핑 성공 | **999개** |
+| DB NULL (미매핑) | 51개 |
+| ~~원인① 파일명 숫자 오류~~ | ~~23개~~ → **수정 완료** |
 | 원인② 이미지 자체 누락 | 23개 |
 
 ### 파일명 숫자 오류 목록 (수정 필요)
