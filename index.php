@@ -1074,12 +1074,12 @@ $serverDataJson = json_encode($serverData, JSON_UNESCAPED_UNICODE | JSON_UNESCAP
             <i class="fa-solid fa-star clear-modal__star clear-modal__star--b animate-twinkle" style="animation-delay: 0.5s"></i>
         </div>
 
-        <h2 class="clear-modal__title">Mission Complete!</h2>
-        <p class="clear-modal__desc">씨앗을 모두 모았어요!</p>
+        <h2 class="clear-modal__title">학습 완료!</h2>
+        <p class="clear-modal__desc">오늘 표현 7개를 모두 배웠어요! 🎉</p>
 
         <button type="button" class="clear-modal__cta" onclick="finishVerb()">
-            <span>Get a Stamp!</span>
-            <i class="fa-solid fa-stamp clear-modal__cta-icon"></i>
+            <span>Together 보기</span>
+            <i class="fa-solid fa-wand-magic-sparkles clear-modal__cta-icon"></i>
         </button>
     </div>
 </div>

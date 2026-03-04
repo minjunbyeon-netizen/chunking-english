@@ -1319,6 +1319,42 @@ function openCard(index) {
     const data = getChunksForVerb(currentVerb)[index];
     const isCollected = collectedIndices.has(index);
 
+    // 카드 클릭 즉시 뒤집기 + 씨앗 포켓 채우기
+    if (!isCollected) {
+        const gridCard = document.getElementById(`mini-card-${index}`);
+        if (gridCard) {
+            const imgSrc = data.image || './img/exc_n1.png';
+            const rect = gridCard.getBoundingClientRect();
+            const startX = rect.left + rect.width / 2 - 20;
+            const startY = rect.top + rect.height / 2 - 20;
+            gridCard.classList.add('collected');
+            gridCard.innerHTML = `
+                <div class="mini-card-inner relative w-full h-full border-2 border-seed-green rounded-2xl shadow-md overflow-hidden bg-white flex flex-col items-center justify-center animate-sprout-pop">
+                    <div class="bg-seed-green/10 absolute inset-0"></div>
+                    <img src="${imgSrc}" alt="Collected" class="object-cover w-full h-full z-10 p-1 rounded-2xl" />
+                </div>`;
+            const totalRequired = getChunksForVerb(currentVerb).length;
+            const nextSlotIndex = Math.min(collectedIndices.size, totalRequired - 1);
+            flySeedAnimation(startX, startY, nextSlotIndex);
+        }
+        collectedIndices.add(index);
+        updateFoundCount();
+
+        // 7장 모두 열면 완료 처리
+        const totalRequired = getChunksForVerb(currentVerb).length;
+        if (collectedIndices.size >= totalRequired) {
+            if (!completedVerbs.has(currentVerb)) {
+                completedVerbs.add(currentVerb);
+                totalStars++;
+                totalTrees++;
+                if (!dayProgress[currentDay]) dayProgress[currentDay] = [];
+                if (!dayProgress[currentDay].includes(currentVerb)) dayProgress[currentDay].push(currentVerb);
+            }
+            // 오버레이 먼저 보여주고, 닫을 때 win modal 표시
+            window._pendingWinModal = true;
+        }
+    }
+
     const adjSelect = document.getElementById('adj-select');
     const adjInput = document.getElementById('adj-custom-input');
     if (adjSelect) adjSelect.value = "";
@@ -1365,26 +1401,14 @@ function openCard(index) {
         </div>
     `;
 
-    let keepBtnHTML = '';
-    if (isCollected) {
-        keepBtnHTML = `
-            <div class="flex-1 h-full">
-                <button class="w-full h-full bg-gray-100 text-gray-400 rounded-xl font-bold cursor-not-allowed flex items-center justify-center gap-1 border border-gray-200">
-                    <i class="fa-solid fa-check"></i> <span class="text-xs md:text-sm">Done</span>
-                </button>
-            </div>
-        `;
-    } else {
-        keepBtnHTML = `
-            <div class="flex-1 h-full" id="keep-btn-wrapper">
-                <button onclick="alert('🎧 Listen and Repeat 버튼(상단 또는 하단)을 눌러 소리를 끝까지 들어주세요!')" class="w-full h-full bg-gray-200 text-gray-500 rounded-xl font-bold shadow-inner flex items-center justify-center gap-2 cursor-pointer transition-all hover:bg-gray-300">
-                    <i class="fa-solid fa-lock"></i>
-                    <span class="text-xs md:text-sm">Listen and Repeat!</span>
-                </button>
-            </div>
-        `;
-    }
-    btnContainer.innerHTML = audioBtnHTML + keepBtnHTML;
+    const closeBtnHTML = `
+        <div class="flex-1 h-full">
+            <button onclick="closeFocusOverlay()" class="w-full h-full bg-seed-green text-white rounded-xl font-bold shadow-md hover:bg-green-500 transition-all flex items-center justify-center gap-1 active:scale-95">
+                <i class="fa-solid fa-check"></i> <span class="text-xs md:text-sm">확인!</span>
+            </button>
+        </div>
+    `;
+    btnContainer.innerHTML = audioBtnHTML + closeBtnHTML;
 
     // 모바일(768px 미만)이면 프리뷰 모달을 띄우고, PC면 바로 기존 학습 모달 띄우기
     if (window.innerWidth < 768) {
@@ -1510,13 +1534,13 @@ function stopPreviewAudio() {
 // 여기서부터는 원래 있던 함수들입니다 (수정 안 함)
 function closeFocusOverlay() {
     document.getElementById('focus-overlay').classList.add('hidden');
-    document.getElementById('focus-overlay').style.display = ''; // 강제 표시 초기화
+    document.getElementById('focus-overlay').style.display = '';
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-}
-
-function closeFocusOverlay() {
-    document.getElementById('focus-overlay').classList.add('hidden');
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    // 7장 모두 열었을 때 win modal
+    if (window._pendingWinModal) {
+        window._pendingWinModal = false;
+        setTimeout(showWinModal, 400);
+    }
 }
 
 // Audio Player Logic
@@ -1678,38 +1702,7 @@ function updateAudioUI() {
 
 function collectCurrentCard(event) {
     if (event) event.stopPropagation();
-    const currentData = getChunksForVerb(currentVerb)[activeCardIndex];
-    const imgSrc = currentData.image || "./img/exc_n1.png";
-    const gridCard = document.getElementById(`mini-card-${activeCardIndex}`);
-    const rect = gridCard.getBoundingClientRect();
-    const startX = rect.left + rect.width / 2 - 20;
-    const startY = rect.top + rect.height / 2 - 20;
-
     closeFocusOverlay();
-    gridCard.classList.add('collected');
-    gridCard.innerHTML = `
-        <div class="mini-card-inner relative w-full h-full border-2 border-seed-green rounded-2xl shadow-md overflow-hidden bg-white flex flex-col items-center justify-center animate-sprout-pop">
-            <div class="bg-seed-green/10 absolute inset-0"></div>
-            <img src="${imgSrc}" alt="Collected" class="object-cover w-full h-full z-10 p-1 rounded-2xl" />
-        </div>`;
-
-    const totalRequired = getChunksForVerb(currentVerb).length;
-    const nextSlotIndex = Math.min(collectedIndices.size, Math.max(0, totalRequired - 1));
-    flySeedAnimation(startX, startY, nextSlotIndex);
-    collectedIndices.add(activeCardIndex);
-    updateFoundCount();
-
-    if (collectedIndices.size >= totalRequired) {
-
-        if (!completedVerbs.has(currentVerb)) {
-            completedVerbs.add(currentVerb);
-            totalStars++;
-            totalTrees++;
-            if (!dayProgress[currentDay]) dayProgress[currentDay] = [];
-            if (!dayProgress[currentDay].includes(currentVerb)) dayProgress[currentDay].push(currentVerb);
-        }
-        setTimeout(showWinModal, 1200);
-    }
 }
 
 function flySeedAnimation(startX, startY, slotIndex) {
@@ -1762,27 +1755,22 @@ function finishVerb() {
     updateMissionStamps();
     switchView('intro');
 
+    // Day 전체 완료 시 DB 저장
     if (completedCount >= totalCount) {
-        // DB에 완료 저장
         fetch('api/progress/save.php', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             credentials: 'same-origin',
             body: JSON.stringify({day_number: currentDay})
         }).catch(e => console.warn('progress save failed', e));
-
         pendingTreeModal = true;
         justCompletedDay = true;
-        setTimeout(() => {
-            openTogetherModal();
-            setTimeout(() => {
-                const tFrame = document.getElementById('together-frame');
-                if (tFrame && tFrame.contentWindow && typeof tFrame.contentWindow.openDetail === 'function') {
-                    tFrame.contentWindow.openDetail(currentDay);
-                }
-            }, 300);
-        }, 1500);
     }
+
+    // 동사 1개 완료마다 항상 Together 열기
+    setTimeout(() => {
+        openTogetherModal();
+    }, 800);
 }
 
 function toggleAdjInput(selectElement) {
