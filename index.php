@@ -129,6 +129,26 @@ $serverDataJson = json_encode($serverData, JSON_UNESCAPED_UNICODE | JSON_UNESCAP
 </head>
 <body class="font-body text-brand-text antialiased bg-brand-cream">
 
+<?php if (!empty($_SESSION['user_id'])): ?>
+<a href="./api/auth/logout.php" style="
+    position:fixed; top:120px; right:16px; z-index:200;
+    display:flex; align-items:center; gap:8px;
+    padding:0 16px; height:40px;
+    background:rgba(255,255,255,0.8);
+    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,0.6);
+    border-radius:9999px;
+    box-shadow:0 4px 10px rgba(255,143,163,0.2);
+    color:#2D2D2D; font-size:14px;
+    text-decoration:none;
+    transition:transform .3s ease-out, box-shadow .3s ease-out, color .3s ease-out;
+" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 25px rgba(255,143,163,0.4)';this.style.color='#FF8FA3'"
+   onmouseout="this.style.transform='';this.style.boxShadow='0 4px 10px rgba(255,143,163,0.2)';this.style.color='#2D2D2D'">
+    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+    <span>로그아웃</span>
+</a>
+<?php endif; ?>
+
 <div id="main-menu-container" class="fixed top-4 left-4 md:top-6 md:left-6 z-[200]">
     <div class="relative">
 

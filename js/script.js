@@ -1971,8 +1971,7 @@ function renderTogetherGrid() {
 
     const completedDaysArray = Array.from(completedDays);
     const completedDaysSet = completedDays;
-    const maxCompletedDay = completedDaysArray.length > 0 ? Math.max(...completedDaysArray) : 0;
-    const accessibleUpTo = Math.max(maxCompletedDay + 1, 1); // 완료된 다음 day(현재 진행중)까지 접근 가능
+    const accessibleUpTo = 250; // 모든 day 접근 가능
 
     for (let i = 1; i <= 250; i++) {
         const btn = document.createElement('button');
