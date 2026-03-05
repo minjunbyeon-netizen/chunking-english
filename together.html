@@ -1419,11 +1419,11 @@
     }
 
     function downloadPDF() {
-        window.print();
+        window.open('/03_chunking/book.php?day=' + currentDay, '_blank');
     }
 
     function downloadMP3() {
-        alert("MP3 다운로드 기능은 추후 지원 예정입니다.\n(서버 연동 필요)");
+        window.open('/03_chunking/api/download/day_mp3_merged.php?day=' + currentDay, '_blank');
     }
 </script>
 </body>
