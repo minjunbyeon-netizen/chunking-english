@@ -2,7 +2,7 @@
 require_once 'config/db.php';
 require_once 'config/auth.php';
 
-$day_num = max(1, min(50, intval($_GET['day'] ?? 1)));
+$day_num = max(1, min(250, intval($_GET['day'] ?? 1)));
 
 // Day 조회
 $stmt = $pdo->prepare("SELECT * FROM days WHERE day_number = ? AND is_active = 1");
@@ -33,7 +33,7 @@ function book_asset_url($path) {
 }
 
 $prev_day = $day_num > 1  ? $day_num - 1 : null;
-$next_day = $day_num < 50 ? $day_num + 1 : null;
+$next_day = $day_num < 250 ? $day_num + 1 : null;
 ?>
 <!DOCTYPE html>
 <html lang="ko">

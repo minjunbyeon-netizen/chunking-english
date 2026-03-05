@@ -16,7 +16,7 @@ if (!$is_localhost && !isset($_SESSION['user_id'])) {
 }
 
 // ── Day 파라미터 ──────────────────────────────────────────────
-$day_num = max(1, min(50, intval($_GET['day'] ?? 0)));
+$day_num = max(1, min(250, intval($_GET['day'] ?? 0)));
 if (!$day_num) {
     http_response_code(400);
     echo json_encode(['error' => '올바른 Day를 입력해주세요.']);
