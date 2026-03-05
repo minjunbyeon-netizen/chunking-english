@@ -423,6 +423,12 @@ function updateLogo() {
         if (scrollY > 500) topBtn.classList.add('show');
         else topBtn.classList.remove('show');
     }
+
+    const boardBtn = document.getElementById('floating-board-btn');
+    if (boardBtn) {
+        if (scrollY > 500) boardBtn.classList.add('show');
+        else boardBtn.classList.remove('show');
+    }
 }
 
 document.getElementById('scroll-to-top').addEventListener('click', () => {
