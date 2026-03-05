@@ -722,24 +722,46 @@
     function renderGrid() {
         const grid = document.getElementById('together-grid');
         grid.innerHTML = '';
-        const openLimit = 40;
+
+        // 부모 창(index.php)의 completedDays Set 참조 (동일 출처)
+        let completedDaysSet = new Set();
+        let maxCompletedDay = 0;
+        try {
+            if (window.parent && window.parent.completedDays) {
+                completedDaysSet = window.parent.completedDays;
+                const arr = Array.from(completedDaysSet);
+                maxCompletedDay = arr.length > 0 ? Math.max(...arr) : 0;
+            }
+        } catch(e) {}
+        const accessibleUpTo = Math.max(maxCompletedDay + 1, 1);
 
         for (let i = 1; i <= 250; i++) {
             const btn = document.createElement('button');
-            const isUnlocked = i <= openLimit;
-            // 모바일 폰트 사이즈 조정
+            const isCompleted = completedDaysSet.has(i);
+            const isAccessible = i <= accessibleUpTo;
             const sizeClass = "text-xl md:text-4xl";
-            // 모바일 그리드에서 5개 배치 시 패딩 최소화
-            btn.className = `together-day-btn ${isUnlocked ? 'unlocked completed' : 'locked opacity-50 grayscale'}`;
 
-            if (isUnlocked) {
+            if (isCompleted) {
+                // 완료된 day: 컬러 + 별
+                btn.className = `together-day-btn unlocked completed`;
                 btn.innerHTML = `
                     <span class="text-[8px] md:text-[10px] font-bold text-map-pink-dark absolute top-0.5 left-1 md:top-2 md:left-3 uppercase tracking-wider">Day</span>
                     <span class="day-num ${sizeClass} font-display text-brand-text mt-1 md:mt-0">${i}</span>
                     <div class="status-icon self-end"><i class="fa-solid fa-star text-yellow-400 text-[9px] md:text-base"></i></div>
                 `;
                 btn.onclick = () => openDetail(i);
+            } else if (isAccessible) {
+                // 진행 중인 day: 컬러지만 별 없음
+                btn.className = `together-day-btn unlocked`;
+                btn.innerHTML = `
+                    <span class="text-[8px] md:text-[10px] font-bold text-map-pink-dark absolute top-0.5 left-1 md:top-2 md:left-3 uppercase tracking-wider">Day</span>
+                    <span class="day-num ${sizeClass} font-display text-brand-text mt-1 md:mt-0">${i}</span>
+                    <div class="status-icon self-end"><i class="fa-regular fa-star text-gray-300 text-[9px] md:text-base"></i></div>
+                `;
+                btn.onclick = () => openDetail(i);
             } else {
+                // 잠긴 day: 흑백 + 자물쇠
+                btn.className = `together-day-btn locked opacity-50 grayscale`;
                 btn.innerHTML = `
                     <span class="text-[8px] md:text-[10px] font-bold text-gray-400 absolute top-0.5 left-1 md:top-2 md:left-3 uppercase tracking-wider">Day</span>
                     <span class="day-num ${sizeClass} font-display text-gray-400 mt-1 md:mt-0">${i}</span>

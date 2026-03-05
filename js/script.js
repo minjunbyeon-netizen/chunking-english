@@ -14,6 +14,7 @@ const iconMap = window.SERVER_DATA.iconMap;
 let unlockedDays = window.SERVER_DATA.progress.unlockedDays;
 let completedVerbs = new Set(window.SERVER_DATA.progress.completedVerbs);
 let stationProgress = window.SERVER_DATA.progress.stationProgress;
+let completedDays = new Set((window.SERVER_DATA.progress.completedDays || []).map(Number));
 
 // ==========================================
 // Global Variables & State
@@ -1356,12 +1357,8 @@ function openCard(index) {
     const basicBtnWrapper = document.getElementById('btn-wrapper-basic');
     if (basicBtnWrapper) basicBtnWrapper.innerHTML = '';
 
-    // 5. 탭 초기화 (여기에 있던 renderAudioStartButton('basic') 삭제!)
+    // 5. 탭 초기화
     showUsageTab('basic');
-
-    // 5. 탭 초기화 및 버튼 렌더링 호출
-    showUsageTab('basic');
-    // renderAudioStartButton('basic');
 
 
     // -----------------------------
@@ -1520,37 +1517,69 @@ function stopPreviewAudio() {
 
 // 여기서부터는 원래 있던 함수들입니다 (수정 안 함)
 function closeFocusOverlay() {
-    document.getElementById('focus-overlay').classList.add('hidden');
-    document.getElementById('focus-overlay').style.display = ''; // 강제 표시 초기화
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-}
-
-function closeFocusOverlay() {
-    document.getElementById('focus-overlay').classList.add('hidden');
+    const overlay = document.getElementById('focus-overlay');
+    if (overlay) {
+        overlay.classList.add('hidden');
+        overlay.style.display = '';
+    }
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
 }
 
 // Audio Player Logic
+function collectCardWithoutClosing() {
+    if (activeCardIndex === -1 || collectedIndices.has(activeCardIndex)) return;
+
+    const currentData = getChunksForVerb(currentVerb)[activeCardIndex];
+    const imgSrc = currentData.image || "./img/exc_n1.png";
+    const gridCard = document.getElementById(`mini-card-${activeCardIndex}`);
+    if (!gridCard) return;
+
+    const rect = gridCard.getBoundingClientRect();
+    const startX = rect.left + rect.width / 2 - 20;
+    const startY = rect.top + rect.height / 2 - 20;
+
+    gridCard.classList.add('collected', 'flipping');
+    setTimeout(() => {
+        const back = gridCard.querySelector('.mini-card-back');
+        const front = gridCard.querySelector('.mini-card-front');
+        const img = gridCard.querySelector('.mini-card-img');
+        if (back) back.classList.add('hidden');
+        if (img) img.src = imgSrc;
+        if (front) front.classList.remove('hidden');
+    }, 200);
+    setTimeout(() => gridCard.classList.remove('flipping'), 500);
+
+    const totalRequired = getChunksForVerb(currentVerb).length;
+    const nextSlotIndex = Math.min(collectedIndices.size, Math.max(0, totalRequired - 1));
+    flySeedAnimation(startX, startY, nextSlotIndex);
+    collectedIndices.add(activeCardIndex);
+    updateFoundCount();
+
+    // win 처리는 오디오 종료 후 unlockKeepButton에서 처리
+}
+
 function playFocusAudio(target) {
     const topBtn = document.getElementById('btn-top-audio');
     if (topBtn) topBtn.classList.remove('btn-guide-effect');
     if (activeCardIndex === -1 || !('speechSynthesis' in window)) return;
 
+    // 클릭 즉시 카드 뒤집기 (모달은 유지)
+    collectCardWithoutClosing();
+
     stopAudioPlayer();
 
     const chunkEng = getChunksForVerb(currentVerb)[activeCardIndex].eng;
-    const detailData = getSeedDetail(chunkEng); // Basic 문장들 가져오기
+    const detailData = getSeedDetail(chunkEng);
 
     audioQueue = [];
     audioHighlightIndices = [];
 
-    // 각 문장당 7번씩 큐에 담기
-    detailData.basic.forEach((item, rowIndex) => {
-        for (let i = 0; i < 7; i++) {
-            audioQueue.push(item.example);
-            audioHighlightIndices.push(rowIndex); // 몇 번째 행인지 기록
-        }
-    });
+    // 카드 인덱스에 해당하는 문장을 7번 반복
+    const cardSentence = detailData.basic[activeCardIndex] || detailData.basic[0];
+    for (let i = 0; i < 7; i++) {
+        audioQueue.push(cardSentence.example);
+        audioHighlightIndices.push(activeCardIndex);
+    }
 
     currentAudioTarget = 'top';
     initAudioPlayer();
@@ -1576,10 +1605,7 @@ function playTableAudio(type) {
         audioQueue = [];
 
         if (type === 'basic') {
-            // [수정됨] Basic 문장들을 7번 반복해서 오디오 큐에 담습니다.
-            for (let i = 0; i < 7; i++) {
-                detailData.basic.forEach(item => audioQueue.push(item.example));
-            }
+            detailData.basic.forEach(item => audioQueue.push(item.example));
         }
 
         currentAudioTarget = type;
@@ -1652,25 +1678,30 @@ function stopAudioPlayer() {
         unlockKeepButton();
     }
 
-    if (currentAudioTarget) renderAudioStartButton(currentAudioTarget);
+    // 모달이 열려있을 때만 버튼 재렌더링
+    const overlay = document.getElementById('focus-overlay');
+    if (currentAudioTarget && overlay && !overlay.classList.contains('hidden')) {
+        renderAudioStartButton(currentAudioTarget);
+    }
     currentAudioTarget = '';
     audioIndex = 0;
 }
 
 function unlockKeepButton() {
-    if (collectedIndices.has(activeCardIndex)) return;
-    const wrapper = document.getElementById('keep-btn-wrapper');
-    if (!wrapper) return;
-    wrapper.innerHTML = `
-        <button id="collect-btn" onclick="collectCurrentCard(event)" class="w-full h-full bg-seed-green text-white rounded-xl font-bold shadow-md hover:bg-green-500 transition-all flex items-center justify-center gap-1 active:scale-95 animate-pop-in">
-            <i class="fa-solid fa-hand-holding-medical"></i>
-            <span class="text-xs md:text-sm">Keep it!</span>
-        </button>
-    `;
-    const btn = wrapper.querySelector('button');
-    if (btn) {
-        btn.classList.add('ring-4', 'ring-offset-2', 'ring-seed-green/50');
-        setTimeout(() => btn.classList.remove('ring-4', 'ring-offset-2', 'ring-seed-green/50'), 1000);
+    if (activeCardIndex === -1) return;
+    closeFocusOverlay();
+
+    const totalRequired = getChunksForVerb(currentVerb).length;
+    if (collectedIndices.size >= totalRequired) {
+        // 모든 카드 완료 → win 처리
+        if (!completedVerbs.has(currentVerb)) {
+            completedVerbs.add(currentVerb);
+            totalStars++;
+            totalTrees++;
+            if (!dayProgress[currentDay]) dayProgress[currentDay] = [];
+            if (!dayProgress[currentDay].includes(currentVerb)) dayProgress[currentDay].push(currentVerb);
+        }
+        setTimeout(showWinModal, 300);
     }
 }
 
@@ -1759,12 +1790,19 @@ function collectCurrentCard(event) {
     const startY = rect.top + rect.height / 2 - 20;
 
     closeFocusOverlay();
-    gridCard.classList.add('collected');
-    gridCard.innerHTML = `
-        <div class="mini-card-inner relative w-full h-full border-2 border-seed-green rounded-2xl shadow-md overflow-hidden bg-white flex flex-col items-center justify-center animate-sprout-pop">
-            <div class="bg-seed-green/10 absolute inset-0"></div>
-            <img src="${imgSrc}" alt="Collected" class="object-cover w-full h-full z-10 p-1 rounded-2xl" />
-        </div>`;
+    gridCard.classList.add('collected', 'flipping');
+
+    // 애니메이션 중간(200ms)에 앞/뒷면 교체
+    setTimeout(() => {
+        const back = gridCard.querySelector('.mini-card-back');
+        const front = gridCard.querySelector('.mini-card-front');
+        const img = gridCard.querySelector('.mini-card-img');
+        if (back) back.classList.add('hidden');
+        if (img) img.src = imgSrc;
+        if (front) front.classList.remove('hidden');
+    }, 200);
+
+    setTimeout(() => gridCard.classList.remove('flipping'), 500);
 
     const totalRequired = getChunksForVerb(currentVerb).length;
     const nextSlotIndex = Math.min(collectedIndices.size, Math.max(0, totalRequired - 1));
@@ -1838,6 +1876,15 @@ function finishVerb() {
     if (completedCount >= totalCount) {
         pendingTreeModal = true;
         justCompletedDay = true;
+
+        // Day 완료 DB 저장 + 로컬 Set 업데이트
+        completedDays.add(currentDay);
+        fetch('/03_chunking/api/progress/save.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ day_number: currentDay })
+        }).catch(() => {}); // 비로그인 시 무시
+
         setTimeout(() => {
             openTogetherModal();
             setTimeout(() => {
@@ -1885,27 +1932,57 @@ function openTogetherModal() {
 function renderTogetherGrid() {
     const grid = document.getElementById('together-grid');
     grid.innerHTML = '';
-    const userProgress = 40;
+
+    const completedDaysArray = Array.from(completedDays);
+    const completedDaysSet = completedDays;
+    const maxCompletedDay = completedDaysArray.length > 0 ? Math.max(...completedDaysArray) : 0;
+    const accessibleUpTo = Math.max(maxCompletedDay + 1, 1); // 완료된 다음 day(현재 진행중)까지 접근 가능
+
     for (let i = 1; i <= 250; i++) {
         const btn = document.createElement('button');
-        const isUnlocked = i <= userProgress;
-        if (isUnlocked) {
-            btn.className = "relative group bg-white border-2 border-brand-pink/30 rounded-2xl p-3 h-28 flex flex-col justify-between hover:border-brand-pink hover:shadow-lg hover:-translate-y-1 transition-all duration-300";
+        const isCompleted = completedDaysSet.has(i);
+        const isAccessible = i <= accessibleUpTo;
+
+        if (isCompleted) {
+            // 완료된 day: 컬러풀 + 별 3개
+            btn.className = "relative group bg-gradient-to-br from-pink-50 to-rose-100 border-2 border-pink-300 rounded-2xl p-3 h-28 flex flex-col justify-between hover:border-pink-400 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer";
             btn.onclick = () => openTogetherDetail(i);
             btn.innerHTML = `
                 <div class="w-full flex justify-between items-start">
-                    <span class="text-[10px] font-bold text-brand-pink-dark uppercase tracking-wider">Day</span>
-                    <i class="fa-solid fa-circle-check text-seed-green text-sm opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    <span class="text-[10px] font-bold text-pink-400 uppercase tracking-wider">Day</span>
+                    <div class="flex gap-0.5">
+                        <i class="fa-solid fa-star text-yellow-400 text-[10px] drop-shadow-sm"></i>
+                        <i class="fa-solid fa-star text-yellow-400 text-[10px] drop-shadow-sm"></i>
+                        <i class="fa-solid fa-star text-yellow-400 text-[10px] drop-shadow-sm"></i>
+                    </div>
                 </div>
-                <span class="text-3xl font-display text-brand-text self-center group-hover:scale-110 transition-transform">${i}</span>
-                <div class="w-full h-1 bg-gray-100 rounded-full overflow-hidden mt-1">
-                    <div class="h-full bg-brand-pink-dark w-full"></div>
+                <span class="text-3xl font-display text-pink-500 self-center group-hover:scale-110 transition-transform">${i}</span>
+                <div class="w-full h-1.5 bg-pink-100 rounded-full overflow-hidden mt-1">
+                    <div class="h-full bg-gradient-to-r from-pink-400 to-rose-400 w-full rounded-full"></div>
                 </div>
             `;
-        } else {
-            btn.className = "bg-gray-50 border-2 border-gray-100 rounded-2xl p-3 h-28 flex flex-col justify-center items-center opacity-60 cursor-not-allowed";
+        } else if (isAccessible) {
+            // 접근 가능하지만 미완료 (현재 진행중인 day)
+            btn.className = "relative group bg-white border-2 border-gray-200 rounded-2xl p-3 h-28 flex flex-col justify-between hover:border-pink-300 hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer";
+            btn.onclick = () => openTogetherDetail(i);
             btn.innerHTML = `
-                <i class="fa-solid fa-lock text-gray-300 text-2xl mb-2"></i>
+                <div class="w-full flex justify-between items-start">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Day</span>
+                    <div class="flex gap-0.5">
+                        <i class="fa-regular fa-star text-gray-300 text-[10px]"></i>
+                        <i class="fa-regular fa-star text-gray-300 text-[10px]"></i>
+                        <i class="fa-regular fa-star text-gray-300 text-[10px]"></i>
+                    </div>
+                </div>
+                <span class="text-3xl font-display text-gray-400 self-center">${i}</span>
+                <div class="w-full h-1 bg-gray-100 rounded-full mt-1"></div>
+            `;
+        } else {
+            // 잠긴 day: 흑백 + 클릭 불가
+            btn.className = "bg-gray-50 border-2 border-gray-100 rounded-2xl p-3 h-28 flex flex-col justify-center items-center opacity-50 cursor-not-allowed grayscale";
+            btn.disabled = true;
+            btn.innerHTML = `
+                <i class="fa-solid fa-lock text-gray-300 text-xl mb-1"></i>
                 <span class="text-lg font-display text-gray-300">${i}</span>
             `;
         }
