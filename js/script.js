@@ -2041,11 +2041,21 @@ function openTogetherDetail(day) {
 function generateTogetherSentences(day) {
     const container = document.getElementById('together-sentences-container');
     container.innerHTML = '';
-    const sentences = togetherData[day] || [
-        {eng: "Coming Soon...", kor: "준비 중입니다..."},
-        {eng: "Keep Learning!", kor: "계속 학습하세요!"},
-        {eng: "You can do it!", kor: "당신은 할 수 있어요!"}
-    ];
+    // togetherData 없으면 해당 day의 masterChunkData에서 대표 표현으로 자동 생성
+    let sentences = togetherData[day];
+    if (!sentences) {
+        const dayVerbs = (levelData[day] && levelData[day].verbs) || [];
+        sentences = [];
+        dayVerbs.forEach(verbKey => {
+            const chunks = getChunksForVerb(verbKey);
+            if (chunks && chunks.length > 0) {
+                sentences.push({ eng: `I ${chunks[0].eng}.`, kor: chunks[0].kor || '' });
+            }
+        });
+        if (sentences.length === 0) {
+            sentences = [{eng: "Coming Soon...", kor: "준비 중입니다..."}];
+        }
+    }
     sentences.forEach((item, index) => {
         const card = document.createElement('div');
         card.className = "together-sentence-card group";

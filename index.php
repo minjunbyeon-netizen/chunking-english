@@ -12,7 +12,7 @@ $stmt = $pdo->query("
     FROM days d
     JOIN verbs v ON v.day_id = d.id
     JOIN expressions e ON e.verb_id = v.id
-    WHERE d.day_number BETWEEN 1 AND 50
+    WHERE d.day_number BETWEEN 1 AND 250
       AND d.is_active = 1
       AND v.verb_en REGEXP '^[a-zA-Z]'
     ORDER BY d.day_number, v.order_num, e.order_num
