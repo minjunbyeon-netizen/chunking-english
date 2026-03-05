@@ -614,11 +614,17 @@ html {
 /* 1. 이미지(hero-exc) 위치 상향 조정 */
 .hero-exc {
     position: relative;
-    width: 18rem;
-    height: 14rem;
+
+    /* 크기를 조금 줄였습니다 (기존 width: 18rem; height: 14rem;) */
+    width: 16rem;
+    height: 12.5rem;
+
     z-index: 20;
-    margin-bottom: 0.5rem; /* 기존 2rem에서 대폭 축소하여 말풍선을 끌어올림 */
-    margin-top: -2rem;    /* 위로 강제 이동 */
+
+    /* 탑에서 조금 내렸습니다 (기존 margin-top: -2rem;) */
+    margin-top: -0.5rem;
+    margin-bottom: 0.5rem;
+
     animation: hero-exc ease-in-out 2s infinite;
 }
 @keyframes hero-exc {
@@ -4800,11 +4806,11 @@ body { overflow-x: hidden; min-height: 100vh; display: flex; flex-direction: col
         width: 96px;
         height: 145px;
     }
-    .together-fixed {
-        scale: 0.75;
-        top: 10px;
-        right: 0px;
-    }
+    /*.together-fixed {*/
+    /*    scale: 0.75;*/
+    /*    top: 10px;*/
+    /*    right: 0px;*/
+    /*}*/
     .ui-mini-card {
         width: 66px;
         height: 88px;
@@ -4887,3 +4893,178 @@ body { overflow-x: hidden; min-height: 100vh; display: flex; flex-direction: col
     transform: scale(0.95) !important;
 }
 
+/* =========================================
+   청킹투게더 플로팅 버튼 (위치 좌측 이동 및 크기 확대)
+   ========================================= */
+.together-fixed {
+    position: fixed;
+    top: 24px;   /* 상단으로 복귀 */
+    right: 24px; /* 우측으로 복귀 */
+    left: auto;  /* 좌측 강제 속성 해제 */
+    z-index: 50;
+    animation: float 3s ease-in-out infinite;
+}
+
+.together-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #ffffff;
+    border: 4px solid #FF8FA3; /* 테두리 두께 증가 */
+    border-radius: 999px;
+    padding: 12px 24px 12px 14px; /* 여백을 늘려 전체 크기 확대 */
+    cursor: pointer;
+    transition: all .2s ease;
+    box-shadow: 4px 4px 0 rgba(45,45,45,.1);
+}
+
+.together-icon {
+    width: 48px; /* 크기 확대 */
+    height: 48px; /* 크기 확대 */
+    background: #FF8FA3;
+    color: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px; /* 아이콘 크기 확대 */
+    box-shadow: inset 0 0 5px rgba(0,0,0,.1);
+    transition: transform .3s ease;
+}
+
+.together-title {
+    font-family: "Chewy", "Jua", sans-serif;
+    font-size: 20px; /* 텍스트 크기 확대 */
+    color: #2D2D2D;
+    line-height: 1;
+    transition: color .3s;
+}
+
+.together-sub {
+    font-size: 14px; /* 서브 텍스트 크기 확대 */
+    font-weight: bold;
+    color: #9ca3af;
+}
+
+/* =========================================
+   게시판 플로팅 고정 버튼 스타일
+   ========================================= */
+#floating-board-btn {
+    position: fixed;
+    bottom: 5.5rem; /* 맨 위로 가기 버튼 위쪽에 배치 */
+    right: 2rem;
+    width: 2.8rem;
+    height: 2.8rem;
+
+    /* 레트로한 민트그린 색상 (테마 컬러와 매칭) */
+    background-color: #8AC9A6;
+    color: white;
+    border: 2px solid white; /* 위로가기 버튼과 통일감 부여 */
+    border-radius: 50%;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    /* 부드러운 입체 그림자 */
+    box-shadow: 0 4px 15px rgba(138, 201, 166, 0.6);
+    cursor: pointer;
+    z-index: 200;
+    text-decoration: none;
+
+    /* 초기 상태: 숨김 (스크롤 시 등장) */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 스크롤 시 등장 애니메이션 */
+#floating-board-btn.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+/* 호버 시 통통 튀는 애니메이션 효과 */
+#floating-board-btn:hover {
+    background-color: #6eb78e; /* 살짝 진해지는 민트 */
+    transform: scale(1.1) translateY(-2px);
+    box-shadow: 0 6px 20px rgba(138, 201, 166, 0.8);
+}
+
+#floating-board-btn i {
+    font-size: 1.1rem;
+    margin-bottom: 2px;
+}
+
+#floating-board-btn span {
+    font-size: 0.65rem;
+    font-family: 'Jua', sans-serif;
+    line-height: 1;
+}
+
+/* 데스크탑(PC) 환경 크기 조정 */
+@media (min-width: 768px) {
+    #floating-board-btn {
+        bottom: 7.5rem;
+        right: 3rem;
+        width: 3.5rem;
+        height: 3.5rem;
+    }
+    #floating-board-btn i {
+        font-size: 1.3rem;
+    }
+    #floating-board-btn span {
+        font-size: 0.75rem;
+    }
+}
+/* =========================================
+   게시판(섹션 3) 스크롤 스냅 및 화면 맞춤 설정
+   ========================================= */
+#board-section {
+    width: 100%;
+    height: 100vh; /* 화면 높이에 꽉 차게 설정 */
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    position: relative;
+    z-index: 20;
+    background-color: #FFF5F7; /* 자연스러운 배경색 연결 */
+}
+
+#board-section iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+}
+
+/* =========================================
+   반응형 모바일 환경 세부 조정 덮어쓰기
+   ========================================= */
+@media screen and (max-width: 1000px) {
+    .together-fixed {
+        scale: 0.9 !important; /* 기존 0.75보다 크게 유지 */
+        top: 20px !important;
+        right: 10px !important;
+        left: auto !important;
+    }
+}
+
+
+/* =========================================
+   모바일 전용: 게시판 섹션 진입 시 플로팅 요소 숨김
+   ========================================= */
+@media (max-width: 767px) {
+    /* body에 is-in-board 클래스가 붙었을 때 3개의 플로팅 버튼 제어 */
+    body.is-in-board #scroll-to-top,
+    body.is-in-board .together-fixed,
+    body.is-in-board #floating-board-btn {
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important; /* 클릭 방지 */
+        transform: translateY(20px) scale(0.9) !important; /* 아래로 살짝 작아지며 사라짐 */
+        transition: all 0.3s ease-out !important;
+    }
+}

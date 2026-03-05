@@ -944,12 +944,23 @@ $serverDataJson = json_encode($serverData, JSON_UNESCAPED_UNICODE | JSON_UNESCAP
                     </div>
                 </div>
             </div>
+        </section> <!-- map-section 닫힘 -->
+
+        <section id="board-section">
+            <iframe src="./board.php" title="Community Board"></iframe>
+        </section>
+
     </main>
 </div>
 
 <button id="scroll-to-top" title="Go to top">
     <i class="fa-solid fa-chevron-up"></i>
 </button>
+
+<a href="#board-section" id="floating-board-btn" title="게시판 가기">
+    <i class="fa-solid fa-pen-to-square"></i>
+    <span>게시판</span>
+</a>
 
 
 

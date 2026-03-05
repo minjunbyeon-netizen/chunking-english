@@ -61,6 +61,16 @@
         .text-shadow-sm {
             text-shadow: 1px 1px 0px rgba(0,0,0,0.1);
         }
+
+        /* ▼ 여기서부터 추가 ▼ */
+        /* iframe 안에서 열렸을 때 적용되는 스타일 */
+        .is-iframe header {
+            display: none !important; /* 헤더 전체(뒤로가기, 타이틀, 배경) 숨김 */
+        }
+        .is-iframe body {
+            background: transparent !important; /* 메인 화면 배경에 자연스럽게 묻어가도록 배경 투명화 */
+        }
+        /* ▲ 여기까지 추가 ▲ */
     </style>
 </head>
 
@@ -332,6 +342,13 @@
 
     // 초기화
     window.onload = renderBoard;
+</script>
+
+<script>
+    // 화면이 iframe 안에서 열렸는지 감지하여 html 태그에 클래스 추가
+    if (window !== window.top) {
+        document.documentElement.classList.add('is-iframe');
+    }
 </script>
 </body>
 </html>
