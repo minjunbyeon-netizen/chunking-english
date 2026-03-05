@@ -1561,7 +1561,18 @@ function collectCardWithoutClosing() {
     collectedIndices.add(activeCardIndex);
     updateFoundCount();
 
-    // win 처리는 오디오 종료 후 unlockKeepButton에서 처리
+    // 모든 카드 수집 완료 시 win 처리 (오디오 종료 대기 없이)
+    const totalRequired2 = getChunksForVerb(currentVerb).length;
+    if (collectedIndices.size >= totalRequired2) {
+        if (!completedVerbs.has(currentVerb)) {
+            completedVerbs.add(currentVerb);
+            totalStars++;
+            totalTrees++;
+            if (!dayProgress[currentDay]) dayProgress[currentDay] = [];
+            if (!dayProgress[currentDay].includes(currentVerb)) dayProgress[currentDay].push(currentVerb);
+        }
+        setTimeout(showWinModal, 1200);
+    }
 }
 
 function playFocusAudio(target) {
@@ -1885,7 +1896,7 @@ function finishVerb() {
 
         // Day 완료 DB 저장 + 로컬 Set 업데이트
         completedDays.add(currentDay);
-        fetch('/03_chunking/api/progress/save.php', {
+        fetch('/chunking-english/api/progress/save.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ day_number: currentDay })

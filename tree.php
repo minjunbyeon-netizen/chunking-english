@@ -1,3 +1,14 @@
+<?php
+require_once 'config/db.php';
+require_once 'config/auth.php';
+$completedDays = [];
+if (!empty($_SESSION['user_id'])) {
+    $ps = $pdo->prepare("SELECT d.day_number FROM progress p JOIN days d ON p.day_id = d.id WHERE p.user_id = ? AND p.completed = 1");
+    $ps->execute([$_SESSION['user_id']]);
+    $completedDays = array_column($ps->fetchAll(PDO::FETCH_ASSOC), 'day_number');
+}
+$completedDaysJson = json_encode(array_map('intval', $completedDays));
+?>
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -250,16 +261,27 @@
             transform: translate(-50%, -50%) scale(1);
         }
 
+        /* 완료된 전구: 반짝반짝 황금빛 */
         .bulb.completed {
             background: radial-gradient(circle at 30% 30%, #fff, #fbbf24) !important;
             color: #78350f;
             text-shadow: 0 1px 2px rgba(255,255,255,0.8);
             border: 2px solid #fff;
             transform: translate(-50%, -50%) scale(1.15);
-            animation: goldenPulse 2s infinite alternate;
+            animation: goldenPulse 1.8s infinite alternate;
         }
         .bulb.completed.show {
             transform: translate(-50%, -50%) scale(1.15);
+        }
+
+        /* 미완료 전구: 흑백/어둡게 */
+        .bulb.locked {
+            background: radial-gradient(circle at 30% 30%, #555, #222) !important;
+            color: #888;
+            border: 1px solid rgba(255,255,255,0.15);
+            filter: grayscale(1) brightness(0.4);
+            animation: none;
+            opacity: 0.5;
         }
 
         .bulb:hover {
@@ -496,17 +518,8 @@
             ornamentPositions.push({ x: xPercent, y: yPercent, color });
         }
 
-        let completedSet = new Set();
-        try {
-            const stored = localStorage.getItem('englishTreeCompleted');
-            if (stored) completedSet = new Set(JSON.parse(stored));
-        } catch (e) {}
-
-        function saveProgress() {
-            try {
-                localStorage.setItem('englishTreeCompleted', JSON.stringify([...completedSet]));
-            } catch (e) {}
-        }
+        // DB에서 완료한 Day 목록 로드
+        const completedSet = new Set(<?= $completedDaysJson ?>);
 
         function renderPage(page) {
             const oldElements = document.querySelectorAll('.bulb, .string-svg');
@@ -552,18 +565,16 @@
                     bulb.style.background = `radial-gradient(circle at 30% 30%, #fff, ${pos.color})`;
 
                     if (completedSet.has(globalIndex)) {
+                        // 완료: 반짝반짝 황금빛
                         bulb.classList.add('completed');
-                    } else {
                         bulb.style.animationDelay = `${Math.random() * 2}s`;
-                        bulb.style.animationDuration = `${Math.random() * 1.5 + 1}s`;
+                        bulb.style.animationDuration = `${(Math.random() * 0.8 + 1.4).toFixed(1)}s`;
+                    } else {
+                        // 미완료: 흑백/꺼진 상태
+                        bulb.classList.add('locked');
                     }
 
                     bulb.addEventListener('click', function() {
-                        if (!this.classList.contains('completed')) {
-                            this.classList.add('completed');
-                            completedSet.add(globalIndex);
-                            saveProgress();
-                        }
                         if(!this.classList.contains('clicked')) {
                             this.classList.add('clicked');
                             setTimeout(() => this.classList.remove('clicked'), 500);

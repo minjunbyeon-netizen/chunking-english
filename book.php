@@ -1,5 +1,6 @@
 <?php
 require_once 'config/db.php';
+require_once 'config/auth.php';
 
 $day_num = max(1, min(50, intval($_GET['day'] ?? 1)));
 

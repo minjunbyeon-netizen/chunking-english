@@ -1,6 +1,6 @@
 <?php
-session_start();
 require_once 'config/db.php';
+require_once 'config/auth.php';
 
 // ── DB에서 Day 1~50 전체 데이터 로드 ──────────────────────────────────────────
 $stmt = $pdo->query("

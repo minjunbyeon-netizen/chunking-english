@@ -30,10 +30,11 @@ if (!$day) {
 }
 
 $stmt = $pdo->prepare("
-    SELECT v.global_num, v.verb_en, e.expression_en, e.order_num
+    SELECT e.audio_path
     FROM verbs v
     JOIN expressions e ON e.verb_id = v.id
-    WHERE v.day_id = ?
+    WHERE v.day_id = ? AND e.audio_path IS NOT NULL AND e.audio_path != ''
+    AND v.verb_en REGEXP '^[a-zA-Z]'
     ORDER BY v.order_num, e.order_num
 ");
 $stmt->execute([$day['id']]);
@@ -49,9 +50,7 @@ $BASE = dirname(__DIR__, 2);
 
 $mp3_files = [];
 foreach ($rows as $row) {
-    $gv   = str_pad($row['global_num'], 2, '0', STR_PAD_LEFT);
-    $slug = strtolower(str_replace(' ', '_', $row['expression_en']));
-    $path = $BASE . "/asset/audio/day {$day_num}/{$gv}. {$row['verb_en']}/{$slug}.mp3";
+    $path = $BASE . '/' . $row['audio_path'];
     if (file_exists($path)) {
         $mp3_files[] = $path;
     }
