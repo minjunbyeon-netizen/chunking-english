@@ -1130,66 +1130,85 @@ function openIntroReadingModal(index) {
     }
 
     const chunks = getChunksForVerb(currentVerb);
-    const safeIndex = Math.max(0, Math.min(Number(index) || 0, chunks.length - 1));
-    const data = chunks[safeIndex];
-
-    if (!data || !data.eng) {
-        modal.classList.add('hidden');
+    if (!chunks || chunks.length === 0) {
         switchView('drill');
         return;
     }
 
-    const details = getSeedDetail(data.eng);
-    const fullSentence = (details && details.basic && details.basic[0] && details.basic[0].example)
-        ? details.basic[0].example
-        : `I ${data.eng}.`;
+    introLoopCount = 0;
+    isIntroPlaying = true;
+
+    modal.classList.remove('is-hidden');
+    setTimeout(() => showIntroExpression(0), 400);
+}
+
+// 7개 표현을 순서대로 하나씩 보여주고 오디오/TTS 재생
+function showIntroExpression(index) {
+    if (!isIntroPlaying) return;
+
+    const chunks = getChunksForVerb(currentVerb);
+    if (index >= chunks.length) {
+        finishIntroReading();
+        return;
+    }
+
+    const data = chunks[index];
+    if (!data || !data.eng) {
+        finishIntroReading();
+        return;
+    }
+
+    const sentence = `I ${data.eng}.`;
 
     const imgEl = document.getElementById('intro-big-img');
     const engEl = document.getElementById('intro-big-eng');
     const korEl = document.getElementById('intro-big-kor');
 
     if (imgEl) imgEl.src = data.image || './img/exc_n1.png';
-    if (engEl) engEl.textContent = fullSentence;
+    if (engEl) engEl.textContent = sentence;
     if (korEl) korEl.textContent = data.kor || '';
 
-    introLoopCount = 0;
-    isIntroPlaying = true;
-    updateIntroUI(0);
+    updateIntroUI(index + 1, chunks.length);
 
-    modal.classList.remove('is-hidden');
-    setTimeout(() => {
-        playIntroLoop(fullSentence);
-    }, 500);
+    const onDone = () => {
+        if (isIntroPlaying) setTimeout(() => showIntroExpression(index + 1), 600);
+    };
+
+    if (data.audio) {
+        _introAudio = new Audio(data.audio);
+        _introAudio.onended = onDone;
+        _introAudio.onerror = () => playIntroTTS(sentence, onDone);
+        _introAudio.play().catch(() => playIntroTTS(sentence, onDone));
+    } else {
+        _introAudio = null;
+        playIntroTTS(sentence, onDone);
+    }
 }
 
-
-function playIntroLoop(text) {
-    if (!isIntroPlaying) return;
-    if (introLoopCount >= MAX_INTRO_LOOPS) {
-        finishIntroReading();
-        return;
-    }
-    introLoopCount++;
-    updateIntroUI(introLoopCount);
+function playIntroTTS(text, onDone) {
+    window.speechSynthesis.cancel();
     const ut = new SpeechSynthesisUtterance(text);
     ut.lang = 'en-US';
     ut.rate = 0.85;
-    ut.onend = function () {
-        if (isIntroPlaying) {
-            setTimeout(() => playIntroLoop(text), 500);
-        }
-    };
+    ut.onend = onDone;
     window.speechSynthesis.speak(ut);
 }
 
-function updateIntroUI(current) {
+function updateIntroUI(current, total) {
+    const t = total || MAX_INTRO_LOOPS;
     document.getElementById('intro-read-count').textContent = current;
-    const percent = (current / MAX_INTRO_LOOPS) * 100;
+    const totalEl = document.querySelector('.intro-modal__count-total');
+    if (totalEl) totalEl.textContent = `/ ${t}`;
+    const percent = (current / t) * 100;
     document.getElementById('intro-progress-bar').style.width = `${percent}%`;
 }
 
+let _introAudio = null; // 현재 재생 중인 intro 오디오 참조
+
 function skipIntroReading() {
+    isIntroPlaying = false;
     window.speechSynthesis.cancel();
+    if (_introAudio) { _introAudio.pause(); _introAudio = null; }
     finishIntroReading();
 }
 
