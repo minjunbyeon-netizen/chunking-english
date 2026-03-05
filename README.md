@@ -8,7 +8,7 @@
 - **목적**: 청킹(Chunking) 방식으로 영어 표현을 매일 학습하는 웹 서비스
 - **대상**: 초등학생 및 학부모 (Kids & Mom)
 - **스택**: PHP + MySQL + HTML/CSS/JS (XAMPP 로컬 환경)
-- **현재 상태**: Phase 1 완료 — 백엔드 DB 연동, book.php 동적화, 인코딩 정상
+- **현재 상태**: Phase 1~3 완료, Phase 4(이미지) 진행중, Phase 5(프론트 연동) 일부 완료
 
 ---
 
@@ -33,21 +33,21 @@ asset/img/day {N}/{GV:02d}. {verb_en}/{expression_snake}.png
 
 ```
 chunking-english/
-├── index.php             ← 메인 학습 페이지 (Day 선택 + 드릴 + 조회수 배지)
+├── index.php             ← 메인 학습 페이지 (Day 선택 + 드릴 + 조회수 배지 + 카드 수집)
 ├── book.php              ← A4 학습지 뷰어 (?day=N)
 ├── register.php          ← 회원가입 (지자체 드롭다운 선택)
 ├── login.php             ← 로그인
 ├── verify_email.php      ← 이메일 인증
-├── find_password.php     ← 비밀번호 찾기
-├── board.php             ← 커뮤니티 게시판
-├── notice.php            ← 공지사항
-├── tree.php              ← My English Tree (게이미피케이션)
-├── together.html         ← 함께하기 페이지
+├── find_password.php     ← 비밀번호 찾기 (UI만, 이메일 발송 미연동)
+├── board.php             ← 커뮤니티 게시판 (UI만, DB 미연동)
+├── notice.php            ← 공지사항 (UI만, DB 미연동)
+├── tree.php              ← My English Tree (게이미피케이션, DB 미연동)
+├── together.html         ← 함께하기 페이지 (UI만)
 ├── check_mapping.php     ← 이미지 매핑 시각 확인 (?day=N)
 │
 ├── admin/
-│   ├── _auth.php         ← 관리자 인증 미들웨어
-│   ├── index.php         ← Day 목록 관리
+│   ├── _auth.php         ← 관리자 인증 미들웨어 (현재 비활성화 - 개발용)
+│   ├── index.php         ← Day 목록 관리 + MP3 ZIP 다운로드
 │   ├── overview.php      ← 전체 현황
 │   ├── dashboard.php     ← 통계 대시보드 (신규 가입·조회수·지자체별 현황)
 │   ├── organizations.php ← 지자체 관리 (허가코드 발급·활성화 토글)
@@ -89,14 +89,8 @@ chunking-english/
 │
 ├── asset/
 │   ├── 청킹 Basic _20260303.xlsx    ← 원본 콘텐츠 Excel
-│   ├── audio/                       ← TTS MP3 파일 (day별 폴더)
-│   ├── img/                         ← 이미지 1.6GB (gitignore, Google Drive)
-│   └── chunkingEnglishKidsAndMom_소스코드/  ← 프론트엔드 원본 소스 백업
-│
-├── chunkingEnglishKidsAndMom/  ← 프론트엔드 UI 소스 (Kids&Mom 버전)
-│   ├── index.php / login.php / book.php 등
-│   ├── css/style.css
-│   └── js/ (script.js, fonts.js, tailwind-config.js)
+│   ├── audio/                       ← TTS MP3 파일 (day별 폴더, gitignore)
+│   └── img/                         ← 이미지 1.6GB (gitignore, Google Drive 동기화)
 │
 ├── css/style.css         ← 메인 스타일시트
 ├── js/script.js          ← 메인 자바스크립트
@@ -105,8 +99,7 @@ chunking-english/
 ├── CHANGELOG.txt         ← 작업 이력 전체
 ├── WORKTHROUGH.md        ← 개발 과정 노트
 ├── API_가이드_프론트엔드용.txt
-├── 집_세팅_가이드.txt
-└── .gitignore
+└── 집_세팅_가이드.txt
 ```
 
 ---
@@ -139,7 +132,7 @@ chunking-english/
 | 프론트 | HTML / CSS / Vanilla JS |
 | 폰트 | Chewy, Quicksand, Jua, Noto Sans KR |
 | 아이콘 | Font Awesome 6 |
-| TTS | Web Speech API (브라우저 내장) |
+| TTS | Typecast API (MP3 생성) / Web Speech API (폴백) |
 | 인쇄 | CSS @media print (A4 최적화) |
 | 버전관리 | Git + GitHub |
 | 이미지 공유 | Google Drive 데스크톱 앱 |
@@ -150,7 +143,7 @@ chunking-english/
 
 ```bash
 # 1. 코드 클론
-git clone https://github.com/minjunbyeon-netizen/chunking-english.git 03_chunking
+git clone https://github.com/minjunbyeon-netizen/chunking-english.git chunking-english
 
 # 2. DB 설정 복사
 cp config/db.example.php config/db.php
@@ -196,47 +189,44 @@ mysql -u root --default-character-set=utf8mb4 chunking_english < database/data.s
 ### Phase 3 — TTS 오디오 ✅ 완료 (2026-03-04)
 - [x] Typecast API 연동 generate_audio_typecast.py
 - [x] api/download/day_audio.php MP3 ZIP 다운로드
-- [x] admin/index.php Day별 ↓MP3 ZIP 버튼
+- [x] admin/index.php Day별 MP3 ZIP 버튼
 
-### Phase 4 — 이미지 정리
+### Phase 4 — 이미지 정리 (진행중)
 - [x] 파일명 숫자 오류 23개 수정 (plant/keep/be/think_in/fix 폴더) ✅ 2026-03-05
-- [ ] 누락 이미지 23개 제작 (Day29/31/34/14/47)
+- [x] 이미지 재매핑 836개 완료 ✅ 2026-03-05
+- [ ] **누락 이미지 ~214개 제작 필요** (아래 목록 참조)
 
-### Phase 5 — 프론트엔드 연동 (진행 예정)
-- [ ] login.php UI → api/auth/login.php 연결
-- [ ] index.php 동적화 완성 (DB 연동)
-- [ ] tree.php → api/progress/my_tree.php 연동
+### Phase 5 — 프론트엔드 연동 (일부 완료)
+- [x] index.php 카드 학습 시스템 DB 연동 (expression_progress 저장) ✅ 2026-03-05
+- [x] 카드 클릭 즉시 수집 처리 + 완료 모달 한글화 ✅ 2026-03-05
+- [ ] **login.php UI → api/auth/login.php 완전 연결 확인**
+- [ ] **tree.php → api/progress/my_tree.php 연동** (학습 완료 Day 시각화)
+- [ ] **board.php 게시판 DB 연동** (글 작성/목록/상세)
+- [ ] **notice.php 공지사항 관리자 연동**
+- [ ] **find_password.php 이메일 발송 연동** (Resend API)
+- [ ] **together.html 기능 정의 및 구현**
 
 ### Phase 6 — 배포
-- [ ] 외부 서버 배포 (Railway 검토 중, Cafe24 비선호)
+- [ ] **외부 서버 배포** (Railway 또는 VPS 검토)
+- [ ] HTTPS 적용 (Let's Encrypt)
+- [ ] 도메인 연결
+- [ ] admin/_auth.php 관리자 인증 재활성화 (배포 전 필수)
 
 ---
 
 ## 이미지 자산 현황
 
-> DB 전체: 5,250개 표현 (Day 1~201, 한국어 동사 포함)
-> 이미지 폴더: Day 1~50 기준 global 1~150 (영어 동사)
-
 | 항목 | 수치 |
 |------|------|
-| 이미지 폴더 내 전체 파일 | ~1,050개 |
-| DB 매핑 성공 | **836개** |
-| DB NULL (미매핑) | 214개 |
-| ~~원인① 파일명 숫자 오류~~ | ~~23개~~ → ✅ 수정 완료 (2026-03-05) |
-| 원인② 이미지 자체 누락 | ~25개 (listen to 7, speak 7, do yoga 1 등) |
-| 원인③ DB 내용 변경으로 불일치 | ~7개 (improve) |
-| 원인④ Day 42~50 신규 콘텐츠 | ~189개 (global 154~186, 이미지 미제작) |
-
-### ✅ 완료: 파일명 숫자 오류 23개 수정 (2026-03-05)
-| Day | 동사 폴더 | 처리 |
-|-----|-----------|------|
-| Day 5 | 14. plant | ✅ _숫자 제거 + DB 업데이트 (7개) |
-| Day 5 | 15. keep  | ✅ _숫자 제거 + DB 업데이트 (7개) |
-| Day 4 | 12. think in | ✅ think_in_Korean_37 → think_in_Korean (1개) |
-| Day 10 | 30. be | ✅ _숫자 제거 + DB 업데이트 (7개) |
-| Day 47 | 141. fix | ✅ fix_the_topic_119 → fix_the_topic (1개) |
+| DB 매핑 성공 | **836개** (2026-03-05 기준) |
+| DB NULL (미매핑) | **214개** |
+| 파일명 숫자 오류 | ~~23개~~ → ✅ 수정 완료 (2026-03-05) |
+| 이미지 자체 누락 | ~25개 (listen to 7, speak 7 등) |
+| DB 내용 변경으로 불일치 | ~7개 (improve) |
+| Day 42~50 신규 콘텐츠 | ~189개 (global 154~186, 이미지 미제작) |
 
 ### 이미지 누락 목록 (제작 필요)
+
 | Day | 동사 폴더 | 누락 수 | 비고 |
 |-----|-----------|---------|------|
 | Day 8  | 25. improve | 7개 | DB 표현 변경으로 기존 이미지 불일치 |
@@ -250,12 +240,56 @@ mysql -u root --default-character-set=utf8mb4 chunking_english < database/data.s
 
 ---
 
+## 남은 작업 우선순위
+
+### 즉시 해야 할 것
+
+1. **누락 이미지 제작** (ComfyUI 활용)
+   - Day 24 (listen to), Day 28 (speak) 각 7개 → 우선
+   - Day 42~50 신규 콘텐츠 이미지 ~189개
+
+2. **tree.php DB 연동**
+   - `api/progress/my_tree.php` 호출해서 완료한 Day 표시
+   - 학습 완료 시 progress 테이블 저장 연동
+
+3. **board.php 게시판 구현**
+   - 게시물 테이블 스키마 추가 (posts)
+   - 글 목록 / 작성 / 상세보기 / 댓글 기능
+
+4. **find_password.php 이메일 발송**
+   - Resend API로 임시 비밀번호 or 재설정 링크 발송
+
+### 배포 전 반드시 할 것
+
+5. **admin/_auth.php 관리자 인증 재활성화**
+   - 현재 개발 편의를 위해 비활성화됨 → 배포 전 반드시 켜야 함
+
+6. **외부 서버 배포**
+   - Railway (PHP 지원 확인 필요) 또는 Cafe24 공유호스팅 / VPS 검토
+   - config/db.php 실서버 DB 정보로 교체
+   - asset/img/ 이미지 서버 업로드 (1.6GB - CDN 검토)
+
+7. **HTTPS 적용**
+   - Let's Encrypt 인증서
+   - 이메일 인증 링크가 https여야 정상 동작
+
+### 추가 기능 (시간 여유 있을 때)
+
+- [ ] asset/audio Day 4~50 MP3 생성 (Typecast TTS 스크립트 이용)
+- [ ] 모바일 반응형 최적화
+- [ ] 지자체별 학습 통계 리포트 CSV 내보내기
+- [ ] 관리자 → 지자체 계약 갱신 (만료일 일괄 연장) 기능
+- [ ] expression_progress 기반 정답률 통계 화면
+
+---
+
 ## 주요 기술 이슈 & 해결책
 
 | 이슈 | 원인 | 해결 |
 |------|------|------|
 | 동사 153개 파싱 오류 | Day 마커를 START로 해석 | 마커는 END 구분선 → 스킵 처리 |
 | 이미지 매핑 90개만 됨 | Day 번호 오류로 폴더 경로 틀림 | 위 마커 버그 수정으로 해결 |
-| check_mapping.php 전부 ❌ | zero-padding 누락 (`1.`→`01.`) | `str_pad($gv, 2, '0', STR_PAD_LEFT)` |
+| check_mapping.php 전부 오류 | zero-padding 누락 (`1.`→`01.`) | `str_pad($gv, 2, '0', STR_PAD_LEFT)` |
 | 한글 깨짐 | data.sql에 SET NAMES 없음 | `SET NAMES utf8mb4;` 추가 후 재임포트 |
 | 이미지 URL 공백 | 폴더명에 공백 포함 | `rawurlencode()` per path segment |
+| 파일명 숫자 오류 | 이미지 파일명에 _숫자 접미사 | 파일명 변경 + DB image_path 업데이트 |
