@@ -497,6 +497,16 @@
         }
 
         let completedSet = new Set();
+        try {
+            const stored = localStorage.getItem('englishTreeCompleted');
+            if (stored) completedSet = new Set(JSON.parse(stored));
+        } catch (e) {}
+
+        function saveProgress() {
+            try {
+                localStorage.setItem('englishTreeCompleted', JSON.stringify([...completedSet]));
+            } catch (e) {}
+        }
 
         function renderPage(page) {
             const oldElements = document.querySelectorAll('.bulb, .string-svg');
@@ -549,6 +559,11 @@
                     }
 
                     bulb.addEventListener('click', function() {
+                        if (!this.classList.contains('completed')) {
+                            this.classList.add('completed');
+                            completedSet.add(globalIndex);
+                            saveProgress();
+                        }
                         if(!this.classList.contains('clicked')) {
                             this.classList.add('clicked');
                             setTimeout(() => this.classList.remove('clicked'), 500);
@@ -583,16 +598,7 @@
             }
         });
 
-        // API에서 완료 Day 로드 후 렌더링
-        fetch('api/progress/my_tree.php', {credentials: 'same-origin'})
-            .then(r => r.json())
-            .then(data => {
-                if (data.completed_days && data.completed_days.length) {
-                    completedSet = new Set(data.completed_days);
-                }
-                renderPage(currentPage);
-            })
-            .catch(() => renderPage(currentPage));
+        renderPage(currentPage);
 
         // ==========================================
         // [2. 밤하늘 동적 오브젝트 (별똥별, 불꽃놀이)]

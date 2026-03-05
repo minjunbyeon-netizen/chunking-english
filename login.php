@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>로그인 · Chunking English</title>
-    <link href="https://fonts.googleapis.com/css2?family=Chewy&family=Jua&display=swap" rel="stylesheet">
+    <title>Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Chewy&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Jua', sans-serif;
+            margin: 0;
+            padding: 0;
             background-color: #FFF5F7;
             display: flex;
             align-items: center;
@@ -16,15 +18,19 @@
             min-height: 100vh;
             padding: 20px;
         }
+
+        /* 배경 고정 */
         .login-bg {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background-image:
-                radial-gradient(#FFE4E8 2px, transparent 2px),
-                linear-gradient(to bottom, #FFF5F7 0%, #FFE4E8 100%);
+                    radial-gradient(#FFE4E8 2px, transparent 2px),
+                    linear-gradient(to bottom, #FFF5F7 0%, #FFE4E8 100%);
             background-size: 30px 30px, 100% 100%;
             z-index: -1;
         }
+
+        /* 전체 레이아웃 컨테이너 */
         .wrapper {
             width: 100%;
             max-width: 400px;
@@ -32,6 +38,8 @@
             flex-direction: column;
             align-items: center;
         }
+
+        /* 상단 외부 제목 스타일 */
         .main-title {
             font-family: 'Chewy', cursive;
             font-size: 3.2rem;
@@ -42,6 +50,8 @@
             text-shadow: 4px 4px 0px #FF8FA3;
             word-break: keep-all;
         }
+
+        /* 로그인 메인 컨테이너 */
         .login-card {
             width: 100%;
             background: #FFFFFF;
@@ -49,7 +59,10 @@
             border-radius: 40px;
             padding: 50px 40px;
             box-shadow: 12px 12px 0px #2D2D2D;
+            position: relative;
+            box-sizing: border-box;
         }
+
         .field-label {
             display: block;
             color: #2D2D2D;
@@ -57,6 +70,7 @@
             margin-bottom: 10px;
             padding-left: 5px;
         }
+
         .input-box {
             width: 100%;
             height: 60px;
@@ -64,17 +78,19 @@
             border: 3px solid #2D2D2D;
             border-radius: 20px;
             padding: 0 20px;
-            font-size: 1rem;
-            font-family: 'Jua', sans-serif;
+            font-size: 1.1rem;
             transition: all 0.2s;
             outline: none;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            box-sizing: border-box;
         }
+
         .input-box:focus {
             background-color: #FFF5F7;
             border-color: #FF8FA3;
             transform: translateY(-2px);
         }
+
         .btn-enter {
             width: 100%;
             height: 65px;
@@ -83,54 +99,41 @@
             border: 3px solid #2D2D2D;
             border-radius: 22px;
             font-size: 1.4rem;
-            font-family: 'Chewy', cursive;
-            letter-spacing: 1px;
             cursor: pointer;
             box-shadow: 0 6px 0px #2D2D2D;
             transition: all 0.1s;
-            margin-top: 10px;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
+
         .btn-enter:active {
             transform: translateY(4px);
             box-shadow: 0 2px 0px #2D2D2D;
         }
-        .btn-enter:disabled {
-            opacity: .6;
-            cursor: not-allowed;
-        }
-        .error-msg {
-            display: none;
-            background: #fff1f2;
-            border: 2px solid #fca5a5;
-            border-radius: 12px;
-            padding: 10px 16px;
-            color: #991b1b;
-            font-size: .88rem;
-            margin-bottom: 16px;
+
+        .find-pw-link {
+            display: block;
             text-align: center;
-        }
-        .bottom-links {
-            margin-top: 28px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-        .bottom-links a {
+            margin-top: 25px;
             color: #9CA3AF;
-            font-size: 0.88rem;
+            font-size: 0.9rem;
             text-decoration: none;
             transition: color 0.2s;
         }
-        .bottom-links a:hover { color: #FF5C77; }
-        .divider {
-            color: #D1D5DB;
-            font-size: .8rem;
+
+        .find-pw-link:hover {
+            color: #FF5C77;
         }
+
+        /* --- 플로팅 홈 버튼 스타일 --- */
         .floating-home {
             position: fixed;
-            bottom: 30px; right: 30px;
-            width: 65px; height: 65px;
+            bottom: 30px;
+            right: 30px;
+            width: 65px;
+            height: 65px;
             background-color: #FFFFFF;
             border: 3px solid #2D2D2D;
             border-radius: 50%;
@@ -143,15 +146,53 @@
             z-index: 100;
             text-decoration: none;
         }
-        .floating-home:hover { background-color: #FFF5F7; transform: scale(1.05); }
-        .floating-home:active { transform: translateY(3px) scale(0.95); box-shadow: 2px 2px 0px #2D2D2D; }
-        .home-icon { width: 30px; height: 30px; fill: #2D2D2D; }
+
+        .floating-home:hover {
+            background-color: #FFF5F7;
+            transform: scale(1.05);
+        }
+
+        .floating-home:active {
+            transform: translateY(3px) scale(0.95);
+            box-shadow: 2px 2px 0px #2D2D2D;
+        }
+
+        .home-icon {
+            width: 30px;
+            height: 30px;
+            fill: #2D2D2D;
+        }
+
+        /* --- 모바일 반응형 대응 --- */
         @media (max-width: 480px) {
-            .main-title { font-size: 2.5rem; margin-bottom: 20px; }
-            .login-card { padding: 40px 25px; border-radius: 30px; box-shadow: 8px 8px 0px #2D2D2D; }
-            .input-box { height: 55px; margin-bottom: 16px; }
-            .btn-enter { height: 60px; font-size: 1.2rem; }
-            .floating-home { bottom: 20px; right: 20px; width: 55px; height: 55px; }
+            .main-title {
+                font-size: 2.5rem;
+                margin-bottom: 20px;
+            }
+
+            .login-card {
+                padding: 40px 25px;
+                border-radius: 30px;
+                box-shadow: 8px 8px 0px #2D2D2D;
+            }
+
+            .input-box {
+                height: 55px;
+                font-size: 1rem;
+                margin-bottom: 20px;
+            }
+
+            .btn-enter {
+                height: 60px;
+                font-size: 1.2rem;
+            }
+
+            .floating-home {
+                bottom: 20px;
+                right: 20px;
+                width: 55px;
+                height: 55px;
+            }
         }
     </style>
 </head>
@@ -160,90 +201,62 @@
 <div class="login-bg"></div>
 
 <a href="./index.php" class="floating-home" title="홈으로 이동">
-    <svg class="home-icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    <svg class="home-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+    </svg>
 </a>
 
 <div class="wrapper">
-    <h1 class="main-title">chunking english<br>kids&amp;mom</h1>
+    <h1 class="main-title">chunking english<br>kids&mom</h1>
 
     <div class="login-card">
-        <div class="error-msg" id="error-msg"></div>
+        <form id="loginForm">
+            <div class="form-group">
+                <label class="field-label">이메일</label>
+                <input type="email" name="email" id="loginEmail" class="input-box" placeholder="이메일 입력" required>
+            </div>
 
-        <label class="field-label">이메일</label>
-        <input type="email" id="email" class="input-box" placeholder="이메일 입력" autocomplete="email">
+            <div class="form-group">
+                <label class="field-label">비밀번호</label>
+                <input type="password" name="password" id="loginPassword" class="input-box" placeholder="비밀번호 입력" required>
+            </div>
 
-        <label class="field-label">비밀번호</label>
-        <input type="password" id="password" class="input-box" placeholder="비밀번호 입력" autocomplete="current-password">
+            <div id="loginError" style="color:#FA4252;font-size:0.85rem;margin-bottom:8px;display:none;text-align:center;"></div>
 
-        <button class="btn-enter" id="btn-login" onclick="doLogin()">ENTER</button>
+            <button type="submit" class="btn-enter">
+                ENTER
+            </button>
+        </form>
+        <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email    = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const errEl    = document.getElementById('loginError');
+            errEl.style.display = 'none';
+            try {
+                const res  = await fetch('./api/auth/login.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    location.href = './index.php';
+                } else {
+                    errEl.textContent = data.error || '로그인 실패';
+                    errEl.style.display = 'block';
+                }
+            } catch(err) {
+                errEl.textContent = '서버 오류가 발생했습니다.';
+                errEl.style.display = 'block';
+            }
+        });
+        </script>
 
-        <div class="bottom-links">
-            <a href="register.php">아직 계정이 없으신가요? 회원가입</a>
-            <a href="find_password.php">비밀번호 찾기</a>
-        </div>
+        <a href="find_password.php" class="find-pw-link">비밀번호 찾기</a>
     </div>
 </div>
 
-<script>
-// 이미 로그인 상태면 메인으로
-fetch('/chunking-english/api/auth/check.php', { credentials: 'include' })
-    .then(r => r.json())
-    .then(d => { if (d.logged_in) location.href = '/chunking-english/index.php'; });
-
-// Enter 키 지원
-document.getElementById('password').addEventListener('keydown', e => {
-    if (e.key === 'Enter') doLogin();
-});
-document.getElementById('email').addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('password').focus();
-});
-
-async function doLogin() {
-    const email    = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const btn      = document.getElementById('btn-login');
-    const errEl    = document.getElementById('error-msg');
-
-    errEl.style.display = 'none';
-
-    if (!email || !password) {
-        showError('이메일과 비밀번호를 입력해주세요.');
-        return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = '...';
-
-    try {
-        const res  = await fetch('/chunking-english/api/auth/login.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ email, password }),
-        });
-        const data = await res.json();
-
-        if (res.ok) {
-            // 관리자면 admin 페이지로, 일반 유저면 메인으로
-            location.href = data.role === 'admin'
-                ? '/chunking-english/admin/'
-                : '/chunking-english/index.php';
-        } else {
-            showError(data.error || '로그인에 실패했습니다.');
-        }
-    } catch {
-        showError('서버에 연결할 수 없습니다.');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'ENTER';
-    }
-}
-
-function showError(msg) {
-    const el = document.getElementById('error-msg');
-    el.textContent = msg;
-    el.style.display = 'block';
-}
-</script>
 </body>
 </html>

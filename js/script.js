@@ -55,6 +55,7 @@ let currentReviewDay = 1;
 
 // Audio Player State
 let audioQueue = [];
+let audioHighlightIndices = []; // ✨ 1번 추가 위치: 하이라이트 행 추적용
 let audioIndex = 0;
 let isAudioPlaying = false;
 let currentAudioTarget = ''; // 'top', 'basic', 'applied'
@@ -319,9 +320,10 @@ function generateBasicUsageHTML(basicExamples, chunkEng) {
     if (rest) pattern = `\\b(${verb}|${verb3rd})\\s+${escapedRest}`;
     const re = new RegExp(pattern, 'gi');
 
-    basicExamples.forEach(item => {
+    basicExamples.forEach((item, index) => {
         const highlighted = item.example.replace(re, match => `<span class="font-bold text-map-pink-dark">${match}</span>`);
-        html += `<tr><th class="text-xs whitespace-nowrap">${item.type}</th><td class="text-sm">${highlighted}</td></tr>`;
+        // tr에 id 부여 및 td에 transition 클래스 추가
+        html += `<tr id="basic-row-${index}"><th class="text-xs whitespace-nowrap">${item.type}</th><td class="text-sm transition-colors duration-300 rounded-md px-2 py-1">${highlighted}</td></tr>`;
     });
     html += `</tbody></table>`;
     return html;
@@ -932,17 +934,24 @@ function switchView(viewName) {
 
     if (viewName === 'map') {
         mapView.classList.remove('blur-md', 'brightness-50');
-        renderMap(); // 이제 DOM 생성 X, 좌표+바인딩만
+        renderMap();
         if (!pendingDayUnlock) {
             setTimeout(() => {
                 const targetDay = currentDay || 1;
                 placeTrainAtDay(targetDay);
+
                 const coords = nodeCoordinates[targetDay];
+                const offset = nodeOffsets[targetDay] || {x: 0, y: -240};
                 const scrollContainer = document.getElementById('map-scroll-container');
-                const isMobile = window.innerWidth < 768;
+                const isMobile = window.innerWidth < 1200;
+
                 if (coords) {
-                    if (isMobile) scrollContainer.scrollTop = coords.y - (scrollContainer.clientHeight / 2);
-                    else scrollContainer.scrollLeft = coords.x - (scrollContainer.clientWidth / 2);
+                    if (isMobile) {
+                        // 모바일: 여기도 250으로 여백 넉넉히 적용
+                        scrollContainer.scrollTop = (coords.y + offset.y) - (scrollContainer.clientHeight / 2) - 250;
+                    } else {
+                        scrollContainer.scrollLeft = (coords.x + offset.x) - (scrollContainer.clientWidth / 2);
+                    }
                 }
             }, 200);
         }
@@ -1306,9 +1315,13 @@ function renderSeedPocket(totalSlots) {
 }
 
 function showUsageTab(tabName) {
-    ['basic', 'applied'].forEach(tab => {
-        document.getElementById(`tab-${tab}`).classList.toggle('active', tab === tabName);
-        document.getElementById(`tab-content-${tab}`).classList.toggle('hidden', tab !== tabName);
+    // applied 관련 로직 삭제 (배열에 'basic'만 남김)
+    ['basic'].forEach(tab => {
+        const tabBtn = document.getElementById(`tab-${tab}`);
+        if (tabBtn) tabBtn.classList.toggle('active', tab === tabName);
+
+        const tabContent = document.getElementById(`tab-content-${tab}`);
+        if (tabContent) tabContent.classList.toggle('hidden', tab !== tabName);
     });
 }
 
@@ -1318,42 +1331,6 @@ function openCard(index) {
     hasPlayedBasic = false;
     const data = getChunksForVerb(currentVerb)[index];
     const isCollected = collectedIndices.has(index);
-
-    // 카드 클릭 즉시 뒤집기 + 씨앗 포켓 채우기
-    if (!isCollected) {
-        const gridCard = document.getElementById(`mini-card-${index}`);
-        if (gridCard) {
-            const imgSrc = data.image || './img/exc_n1.png';
-            const rect = gridCard.getBoundingClientRect();
-            const startX = rect.left + rect.width / 2 - 20;
-            const startY = rect.top + rect.height / 2 - 20;
-            gridCard.classList.add('collected');
-            gridCard.innerHTML = `
-                <div class="mini-card-inner relative w-full h-full border-2 border-seed-green rounded-2xl shadow-md overflow-hidden bg-white flex flex-col items-center justify-center animate-sprout-pop">
-                    <div class="bg-seed-green/10 absolute inset-0"></div>
-                    <img src="${imgSrc}" alt="Collected" class="object-cover w-full h-full z-10 p-1 rounded-2xl" />
-                </div>`;
-            const totalRequired = getChunksForVerb(currentVerb).length;
-            const nextSlotIndex = Math.min(collectedIndices.size, totalRequired - 1);
-            flySeedAnimation(startX, startY, nextSlotIndex);
-        }
-        collectedIndices.add(index);
-        updateFoundCount();
-
-        // 7장 모두 열면 완료 처리
-        const totalRequired = getChunksForVerb(currentVerb).length;
-        if (collectedIndices.size >= totalRequired) {
-            if (!completedVerbs.has(currentVerb)) {
-                completedVerbs.add(currentVerb);
-                totalStars++;
-                totalTrees++;
-                if (!dayProgress[currentDay]) dayProgress[currentDay] = [];
-                if (!dayProgress[currentDay].includes(currentVerb)) dayProgress[currentDay].push(currentVerb);
-            }
-            // 오버레이 먼저 보여주고, 닫을 때 win modal 표시
-            window._pendingWinModal = true;
-        }
-    }
 
     const adjSelect = document.getElementById('adj-select');
     const adjInput = document.getElementById('adj-custom-input');
@@ -1371,44 +1348,54 @@ function openCard(index) {
     // 2. 데이터 생성
     const detailData = getSeedDetail(data.eng);
 
-    // 3. 테이블 데이터 주입
+    // 3. 테이블 데이터 주입 (★Basic 청크 내용은 그대로 유지★)
     const basicTable = document.getElementById('basic-usage-table');
     if (basicTable) basicTable.innerHTML = generateBasicUsageHTML(detailData.basic, data.eng);
 
-    const appliedTable = document.getElementById('applied-usage-table');
-    if (appliedTable) appliedTable.innerHTML = generateAppliedUsageHTML(detailData.applied, data.eng);
-
-    // 4. 버튼 영역 초기화 (기존 버튼 제거 후 재생성)
+    // 4. 버튼 영역 초기화 (Applied 제거, Basic만 빈 값으로 유지)
     const basicBtnWrapper = document.getElementById('btn-wrapper-basic');
-    const appliedBtnWrapper = document.getElementById('btn-wrapper-applied');
     if (basicBtnWrapper) basicBtnWrapper.innerHTML = '';
-    if (appliedBtnWrapper) appliedBtnWrapper.innerHTML = '';
 
-    // 5. 탭 초기화 및 [중요] 버튼 렌더링 호출
+    // 5. 탭 초기화 (여기에 있던 renderAudioStartButton('basic') 삭제!)
     showUsageTab('basic');
 
-    // 여기서 Basic과 Applied 버튼을 모두 생성합니다.
-    renderAudioStartButton('basic');
-    renderAudioStartButton('applied');
+    // 5. 탭 초기화 및 버튼 렌더링 호출
+    showUsageTab('basic');
+    // renderAudioStartButton('basic');
+
+
+    // -----------------------------
 
     // 6. 상단(모바일 제외)/좌측 버튼 설정
     const btnContainer = document.getElementById('action-buttons-row');
     const audioBtnHTML = `
         <div id="btn-wrapper-top" class="flex-1 h-full">
-            <button id="btn-top-audio" onclick="playFocusAudio('top')" class="btn-guide-effect w-full h-full bg-map-pink text-white rounded-xl font-bold shadow-sm hover:bg-pink-400 transition-all flex items-center justify-center gap-1 active:scale-95">
+            <button id="btn-top-audio" onclick="playFocusAudio('top')" class="btn-guide-effect btn-blue-outline w-full h-full rounded-xl font-bold shadow-sm flex items-center justify-center gap-2">
                 <i class="fa-solid fa-volume-high"></i> <span class="text-xs md:text-sm">Listen and Repeat!</span>
             </button>
         </div>
     `;
 
-    const closeBtnHTML = `
-        <div class="flex-1 h-full">
-            <button onclick="closeFocusOverlay()" class="w-full h-full bg-seed-green text-white rounded-xl font-bold shadow-md hover:bg-green-500 transition-all flex items-center justify-center gap-1 active:scale-95">
-                <i class="fa-solid fa-check"></i> <span class="text-xs md:text-sm">확인!</span>
-            </button>
-        </div>
-    `;
-    btnContainer.innerHTML = audioBtnHTML + closeBtnHTML;
+    let keepBtnHTML = '';
+    if (isCollected) {
+        keepBtnHTML = `
+            <div class="flex-1 h-full">
+                <button class="w-full h-full bg-gray-100 text-gray-400 rounded-xl font-bold cursor-not-allowed flex items-center justify-center gap-1 border border-gray-200">
+                    <i class="fa-solid fa-check"></i> <span class="text-xs md:text-sm">Done</span>
+                </button>
+            </div>
+        `;
+    } else {
+        keepBtnHTML = `
+            <div class="flex-1 h-full" id="keep-btn-wrapper">
+                <button onclick="alert('🎧 Listen and Repeat 버튼을 눌러 소리를 끝까지 들어주세요!')" class="w-full h-full bg-gray-200 text-gray-500 rounded-xl font-bold shadow-inner flex items-center justify-center gap-2 cursor-pointer transition-all hover:bg-gray-300">
+                    <i class="fa-solid fa-lock"></i>
+                    <span class="text-xs md:text-sm">Listen and Repeat!</span>
+                </button>
+            </div>
+        `;
+    }
+    btnContainer.innerHTML = audioBtnHTML + keepBtnHTML;
 
     // 모바일(768px 미만)이면 프리뷰 모달을 띄우고, PC면 바로 기존 학습 모달 띄우기
     if (window.innerWidth < 768) {
@@ -1534,13 +1521,13 @@ function stopPreviewAudio() {
 // 여기서부터는 원래 있던 함수들입니다 (수정 안 함)
 function closeFocusOverlay() {
     document.getElementById('focus-overlay').classList.add('hidden');
-    document.getElementById('focus-overlay').style.display = '';
+    document.getElementById('focus-overlay').style.display = ''; // 강제 표시 초기화
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-    // 7장 모두 열었을 때 win modal
-    if (window._pendingWinModal) {
-        window._pendingWinModal = false;
-        setTimeout(showWinModal, 400);
-    }
+}
+
+function closeFocusOverlay() {
+    document.getElementById('focus-overlay').classList.add('hidden');
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
 }
 
 // Audio Player Logic
@@ -1548,10 +1535,23 @@ function playFocusAudio(target) {
     const topBtn = document.getElementById('btn-top-audio');
     if (topBtn) topBtn.classList.remove('btn-guide-effect');
     if (activeCardIndex === -1 || !('speechSynthesis' in window)) return;
+
     stopAudioPlayer();
+
     const chunkEng = getChunksForVerb(currentVerb)[activeCardIndex].eng;
+    const detailData = getSeedDetail(chunkEng); // Basic 문장들 가져오기
+
     audioQueue = [];
-    for (let i = 0; i < 7; i++) audioQueue.push(chunkEng);
+    audioHighlightIndices = [];
+
+    // 각 문장당 7번씩 큐에 담기
+    detailData.basic.forEach((item, rowIndex) => {
+        for (let i = 0; i < 7; i++) {
+            audioQueue.push(item.example);
+            audioHighlightIndices.push(rowIndex); // 몇 번째 행인지 기록
+        }
+    });
+
     currentAudioTarget = 'top';
     initAudioPlayer();
 }
@@ -1559,22 +1559,29 @@ function playFocusAudio(target) {
 function playTableAudio(type) {
     const topBtn = document.getElementById('btn-top-audio');
     if (topBtn) topBtn.classList.remove('btn-guide-effect');
+
     const myBtnContainer = document.getElementById(`btn-wrapper-${type}`);
     if (myBtnContainer) {
         const btn = myBtnContainer.querySelector('button');
         if (btn) btn.classList.remove('btn-guide-effect');
     }
+
     if (activeCardIndex === -1) return;
+
     stopAudioPlayer();
+
     setTimeout(() => {
         const chunkEng = getChunksForVerb(currentVerb)[activeCardIndex].eng;
         const detailData = getSeedDetail(chunkEng);
         audioQueue = [];
+
         if (type === 'basic') {
-            detailData.basic.forEach(item => audioQueue.push(item.example));
-        } else if (type === 'applied') {
-            detailData.applied.forEach(item => audioQueue.push(item.example));
+            // [수정됨] Basic 문장들을 7번 반복해서 오디오 큐에 담습니다.
+            for (let i = 0; i < 7; i++) {
+                detailData.basic.forEach(item => audioQueue.push(item.example));
+            }
         }
+
         currentAudioTarget = type;
         initAudioPlayer();
     }, 50);
@@ -1583,15 +1590,16 @@ function playTableAudio(type) {
 function renderAudioStartButton(target) {
     const container = document.getElementById(`btn-wrapper-${target}`);
     if (!container) return;
+
     if (target === 'top') {
         container.innerHTML = `
-            <button onclick="playFocusAudio('top')" class="w-full h-full bg-map-pink text-white rounded-xl font-bold shadow-sm hover:bg-pink-400 transition-all flex items-center justify-center gap-1 active:scale-95 animate-fade">
+            <button onclick="playFocusAudio('top')" class="btn-guide-effect btn-blue-outline w-full h-full rounded-xl font-bold shadow-sm flex items-center justify-center gap-2 animate-fade">
                 <i class="fa-solid fa-volume-high"></i> <span class="text-xs md:text-sm">Listen and Repeat!</span>
             </button>
         `;
     } else {
         container.innerHTML = `
-            <button onclick="playTableAudio('${target}')" class="w-full h-12 bg-white border-2 border-retro-blue text-retro-blue rounded-xl font-bold shadow-sm hover:bg-retro-blue hover:text-white transition-all flex items-center justify-center gap-2 animate-fade">
+            <button onclick="playTableAudio('${target}')" class="btn-blue-outline w-full h-12 rounded-xl font-bold shadow-sm flex items-center justify-center gap-2 animate-fade">
                 <i class="fa-solid fa-play"></i>
                 <span>Listen and Repeat!</span>
             </button>
@@ -1634,14 +1642,16 @@ function speakNextChunk() {
 function stopAudioPlayer() {
     isAudioPlaying = false;
     window.speechSynthesis.cancel();
-    if (hasPlayedTop && !hasPlayedBasic) {
-        const basicBtnContainer = document.getElementById('btn-wrapper-basic');
-        if (basicBtnContainer) {
-            const btn = basicBtnContainer.querySelector('button');
-            if (btn) btn.classList.add('btn-guide-effect');
-        }
+
+    // 오디오 정지 시 하이라이트 초기화
+    const allRows = document.querySelectorAll('[id^="basic-row-"] td');
+    allRows.forEach(td => td.classList.remove('text-blue-600', 'font-bold', 'bg-blue-50'));
+
+    // 하단 버튼이 사라졌으므로, 상단 오디오만 끝까지 들으면 Keep 버튼 잠금 해제
+    if (hasPlayedTop) {
+        unlockKeepButton();
     }
-    if (hasPlayedTop && hasPlayedBasic) unlockKeepButton();
+
     if (currentAudioTarget) renderAudioStartButton(currentAudioTarget);
     currentAudioTarget = '';
     audioIndex = 0;
@@ -1675,34 +1685,104 @@ function restartAudioPlayer() {
 function updateAudioUI() {
     const container = document.getElementById(`btn-wrapper-${currentAudioTarget}`);
     if (!container) return;
+
+    // 전체 문장 개수
+    const totalSentences = audioHighlightIndices.length > 0 ? [...new Set(audioHighlightIndices)].length : 1;
+
+    // 현재 몇 번째 문장을 읽고 있는지 계산
+    let currentSentenceNum = Math.floor(audioIndex / 7) + 1;
+    if (currentSentenceNum > totalSentences) currentSentenceNum = totalSentences;
+
+    // 진행 바 게이지 퍼센트
     const percent = ((audioIndex) / audioQueue.length) * 100;
-    const currentNum = Math.min(audioIndex + 1, audioQueue.length);
-    container.innerHTML = `
-        <div class="w-full h-full bg-slate-50 border border-map-pink rounded-xl px-3 py-1 flex flex-col justify-center gap-1 shadow-inner animate-fade">
-            <div class="flex justify-between items-center">
-                <span class="text-xs font-bold text-map-pink-dark flex items-center gap-1">
-                    <i class="fa-solid fa-volume-high animate-pulse"></i>
-                    ${currentNum} / ${audioQueue.length}
-                </span>
-                <div class="flex gap-2">
-                    <button onclick="restartAudioPlayer()" class="w-6 h-6 rounded-full bg-white text-blue-400 hover:text-blue-600 border border-blue-100 flex items-center justify-center transition-colors">
-                        <i class="fa-solid fa-rotate-right text-[10px]"></i>
-                    </button>
-                    <button onclick="stopAudioPlayer()" class="w-6 h-6 rounded-full bg-white text-red-400 hover:text-red-600 border border-red-100 flex items-center justify-center transition-colors">
-                        <i class="fa-solid fa-stop text-[10px]"></i>
-                    </button>
+
+    // 1. 이미 재생 UI가 화면에 렌더링되어 있는지 확인
+    const existingUI = container.querySelector('.audio-ui-active');
+
+    if (existingUI) {
+        // 이미 렌더링 되어 있다면 HTML을 새로 덮어쓰지 않고 값만 변경 (CSS 애니메이션 작동!)
+        const progressFill = existingUI.querySelector('.progress-fill');
+        const statusText = existingUI.querySelector('.status-text');
+
+        if (progressFill) progressFill.style.width = `${percent}%`;
+        if (statusText) statusText.innerHTML = `<i class="fa-solid fa-volume-high"></i> ${currentSentenceNum} / ${totalSentences}`;
+    } else {
+        // 처음에만 전체 HTML을 렌더링
+        container.innerHTML = `
+            <div class="audio-ui-active w-full h-full bg-slate-50 border-2 border-blue-400 rounded-xl px-3 py-1 flex flex-col justify-center gap-1 shadow-[0_0_15px_rgba(59,130,246,0.6)] transition-all duration-300">
+                <div class="flex justify-between items-center">
+                    <span class="status-text text-xs font-bold text-blue-500 flex items-center gap-1">
+                        <i class="fa-solid fa-volume-high"></i>
+                        ${currentSentenceNum} / ${totalSentences}
+                    </span>
+                    <div class="flex gap-2">
+                        <button onclick="restartAudioPlayer()" class="w-6 h-6 rounded-full bg-white text-blue-400 hover:text-blue-600 border border-blue-100 flex items-center justify-center transition-colors">
+                            <i class="fa-solid fa-rotate-right text-[10px]"></i>
+                        </button>
+                        <button onclick="stopAudioPlayer()" class="w-6 h-6 rounded-full bg-white text-red-400 hover:text-red-600 border border-red-100 flex items-center justify-center transition-colors">
+                            <i class="fa-solid fa-stop text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div class="progress-fill h-full bg-blue-500 transition-all duration-500 ease-out" style="width: ${percent}%"></div>
                 </div>
             </div>
-            <div class="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                <div class="h-full bg-map-pink-dark transition-all duration-300 ease-linear" style="width: ${percent}%"></div>
-            </div>
-        </div>
-    `;
+        `;
+    }
+
+    // ---- 하이라이트 적용 로직 ----
+    const allRows = document.querySelectorAll('[id^="basic-row-"] td');
+    allRows.forEach(td => {
+        td.classList.remove('text-blue-600', 'font-bold', 'bg-blue-50');
+    });
+
+    if (isAudioPlaying && audioIndex < audioHighlightIndices.length) {
+        const activeRowIndex = audioHighlightIndices[audioIndex];
+        const activeRow = document.getElementById(`basic-row-${activeRowIndex}`);
+        if (activeRow) {
+            const td = activeRow.querySelector('td');
+            if (td) {
+                td.classList.add('text-blue-600', 'font-bold', 'bg-blue-50');
+            }
+        }
+    }
 }
 
 function collectCurrentCard(event) {
     if (event) event.stopPropagation();
+    const currentData = getChunksForVerb(currentVerb)[activeCardIndex];
+    const imgSrc = currentData.image || "./img/exc_n1.png";
+    const gridCard = document.getElementById(`mini-card-${activeCardIndex}`);
+    const rect = gridCard.getBoundingClientRect();
+    const startX = rect.left + rect.width / 2 - 20;
+    const startY = rect.top + rect.height / 2 - 20;
+
     closeFocusOverlay();
+    gridCard.classList.add('collected');
+    gridCard.innerHTML = `
+        <div class="mini-card-inner relative w-full h-full border-2 border-seed-green rounded-2xl shadow-md overflow-hidden bg-white flex flex-col items-center justify-center animate-sprout-pop">
+            <div class="bg-seed-green/10 absolute inset-0"></div>
+            <img src="${imgSrc}" alt="Collected" class="object-cover w-full h-full z-10 p-1 rounded-2xl" />
+        </div>`;
+
+    const totalRequired = getChunksForVerb(currentVerb).length;
+    const nextSlotIndex = Math.min(collectedIndices.size, Math.max(0, totalRequired - 1));
+    flySeedAnimation(startX, startY, nextSlotIndex);
+    collectedIndices.add(activeCardIndex);
+    updateFoundCount();
+
+    if (collectedIndices.size >= totalRequired) {
+
+        if (!completedVerbs.has(currentVerb)) {
+            completedVerbs.add(currentVerb);
+            totalStars++;
+            totalTrees++;
+            if (!dayProgress[currentDay]) dayProgress[currentDay] = [];
+            if (!dayProgress[currentDay].includes(currentVerb)) dayProgress[currentDay].push(currentVerb);
+        }
+        setTimeout(showWinModal, 1200);
+    }
 }
 
 function flySeedAnimation(startX, startY, slotIndex) {
@@ -1755,22 +1835,19 @@ function finishVerb() {
     updateMissionStamps();
     switchView('intro');
 
-    // Day 전체 완료 시 DB 저장
     if (completedCount >= totalCount) {
-        fetch('api/progress/save.php', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            credentials: 'same-origin',
-            body: JSON.stringify({day_number: currentDay})
-        }).catch(e => console.warn('progress save failed', e));
         pendingTreeModal = true;
         justCompletedDay = true;
+        setTimeout(() => {
+            openTogetherModal();
+            setTimeout(() => {
+                const tFrame = document.getElementById('together-frame');
+                if (tFrame && tFrame.contentWindow && typeof tFrame.contentWindow.openDetail === 'function') {
+                    tFrame.contentWindow.openDetail(currentDay);
+                }
+            }, 300);
+        }, 1500);
     }
-
-    // 동사 1개 완료마다 항상 Together 열기
-    setTimeout(() => {
-        openTogetherModal();
-    }, 800);
 }
 
 function toggleAdjInput(selectElement) {
@@ -2028,6 +2105,7 @@ function onTreeClick(e) {
     const rect = treeCanvas.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
+
     for (let i = ornaments.length - 1; i >= 0; i--) {
         const o = ornaments[i];
         if (dist(clickX, clickY, o.x, o.y) < o.size + 15) {
@@ -2035,15 +2113,24 @@ function onTreeClick(e) {
             currentDay = o.day;
             switchView('map');
             placeTrainAtDay(currentDay);
+
             const coords = nodeCoordinates[currentDay];
+            const offset = nodeOffsets[currentDay] || {x: 0, y: -240};
             const scrollContainer = document.getElementById('map-scroll-container');
-            const isMobile = window.innerWidth < 768;
+            const isMobile = window.innerWidth < 1200;
+
             if (coords) {
-                if (isMobile) scrollContainer.scrollTo({
-                    top: coords.y - (scrollContainer.clientHeight / 2),
-                    behavior: 'smooth'
-                });
-                else scrollContainer.scrollTo({left: coords.x - (scrollContainer.clientWidth / 2), behavior: 'smooth'});
+                if (isMobile) {
+                    scrollContainer.scrollTo({
+                        top: (coords.y + offset.y) - (scrollContainer.clientHeight / 2),
+                        behavior: 'smooth'
+                    });
+                } else {
+                    scrollContainer.scrollTo({
+                        left: (coords.x + offset.x) - (scrollContainer.clientWidth / 2),
+                        behavior: 'smooth'
+                    });
+                }
             }
             return;
         }
@@ -2438,16 +2525,22 @@ function customSmoothScroll(element, target, duration, isHorizontal) {
 
 function centerMapOnStation(day, isInstant = false) {
     const coords = nodeCoordinates[day];
+    const offset = nodeOffsets[day] || {x: 0, y: -240};
     if (!coords) return;
     const scrollContainer = document.getElementById('map-scroll-container');
     const isMobile = window.innerWidth < 1200;
+
     if (isMobile) {
-        let targetScrollTop = coords.y - (scrollContainer.clientHeight / 2);
-        targetScrollTop -= 150;
+        const actualY = coords.y + offset.y;
+        // 여백 보정값을 120 -> 250으로 넉넉하게 늘려줍니다.
+        let targetScrollTop = actualY - (scrollContainer.clientHeight / 2) - 250;
+
         if (isInstant) scrollContainer.scrollTo({top: targetScrollTop, behavior: 'auto'});
         else customSmoothScroll(scrollContainer, targetScrollTop, 2500, false);
     } else {
-        const targetScrollLeft = coords.x - (scrollContainer.clientWidth / 2);
+        const actualX = coords.x + offset.x;
+        let targetScrollLeft = actualX - (scrollContainer.clientWidth / 2);
+
         if (isInstant) scrollContainer.scrollTo({left: targetScrollLeft, behavior: 'auto'});
         else customSmoothScroll(scrollContainer, targetScrollLeft, 2000, true);
     }

@@ -1997,6 +1997,18 @@ html {
     .ui-tab-half{ padding:1rem; font-size:1.125rem; }
 }
 
+/* 기존 ui-tab-half 아래에 추가 */
+.ui-tab-full {
+    width: 100%;
+    padding: 0.5rem;
+    font-weight: 700;
+    font-size: 0.875rem;
+    transition: all 200ms;
+}
+@media (min-width: 768px) {
+    .ui-tab-full { padding: 1rem; font-size: 1.125rem; }
+}
+
 .ui-focus-panels{
     flex:1;
     position:relative;
@@ -3696,28 +3708,27 @@ html {
     scroll-snap-stop: always;
     height: 100vh;
 }
-/* [신규] 버튼 클릭 유도 효과 (노란색 파동) */
+
+/* 버튼 클릭 유도 효과 (크기 변화 삭제, 파란색 빛 번짐만 유지) */
 @keyframes attention-pulse {
     0% {
-        box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); /* 금색 */
-        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
     }
     70% {
-        box-shadow: 0 0 0 15px rgba(255, 215, 0, 0); /* 퍼지면서 투명해짐 */
-        transform: scale(1.03);
+        box-shadow: 0 0 0 15px rgba(59, 130, 246, 0);
     }
     100% {
-        box-shadow: 0 0 0 0 rgba(255, 215, 0, 0);
-        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
     }
 }
 
 .btn-guide-effect {
     animation: attention-pulse 1.5s infinite !important;
-    border: 3px solid #FFD700 !important; /* 진한 노란 테두리 */
+    border: 3px solid #3B82F6 !important;
     z-index: 50;
     position: relative;
 }
+
 /* [통합 수정] 구름 컨테이너 + 이미지 애니메이션 전체 코드 */
 
 /* [신규] 말풍선 애니메이션 스타일 */
@@ -4851,5 +4862,21 @@ body { overflow-x: hidden; min-height: 100vh; display: flex; flex-direction: col
         padding: 0 !important;
         filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15)) !important; /* 예쁜 피사체 그림자 */
     }
+}
+
+/* PC, 모바일 공통: 파란색 테두리 버튼 스타일 */
+.btn-blue-outline {
+    background-color: #ffffff !important;
+    color: #3B82F6 !important;
+    border: 2px solid #3B82F6 !important;
+    transition: all 0.2s ease-in-out !important;
+}
+.btn-blue-outline:hover {
+    background-color: #3B82F6 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25) !important;
+}
+.btn-blue-outline:active {
+    transform: scale(0.95) !important;
 }
 

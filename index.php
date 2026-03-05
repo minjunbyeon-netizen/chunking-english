@@ -31,7 +31,6 @@ function chunk_url(?string $path): ?string {
 // ── levelData / masterChunkData 빌드 ─────────────────────────────────────────
 $levelData      = [];
 $masterChunkData = [];
-$seenVerbs = []; // day_number+verb_id 중복 방지
 
 foreach ($rows as $row) {
     $day     = (int)$row['day_number'];
@@ -122,6 +121,7 @@ $serverDataJson = json_encode($serverData, JSON_UNESCAPED_UNICODE | JSON_UNESCAP
     <script src="./js/tailwind-config.js"></script>
     <script src="js/script.js" defer></script>
 
+
     <script>
         window.SERVER_DATA = <?= $serverDataJson ?>;
     </script>
@@ -140,29 +140,37 @@ $serverDataJson = json_encode($serverData, JSON_UNESCAPED_UNICODE | JSON_UNESCAP
 
             <div class="main-menu-dropdown__inner">
 
-                <a href="./login.php" id="menu-login-link" class="main-menu-item">
+                <?php if (!empty($_SESSION['user_id'])): ?>
+                <a href="./api/auth/logout.php" class="main-menu-item">
+                    <div class="main-menu-item__icon main-menu-item__icon--pink">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </div>
+                    <span class="main-menu-text"><?= htmlspecialchars($_SESSION['nickname'] ?? '로그아웃') ?></span>
+                </a>
+                <?php else: ?>
+                <a href="./login.php" class="main-menu-item">
                     <div class="main-menu-item__icon main-menu-item__icon--pink">
                         <i class="fa-solid fa-arrow-right-to-bracket"></i>
                     </div>
                     <span class="main-menu-text">로그인</span>
                 </a>
-
-                <div id="menu-user-area" style="display:none;">
-                    <div class="main-menu-item" style="cursor:default;">
-                        <div class="main-menu-item__icon main-menu-item__icon--pink">
-                            <i class="fa-solid fa-user"></i>
-                        </div>
-                        <span class="main-menu-text" id="menu-nickname" style="font-size:.82rem;"></span>
-                    </div>
-                    <button type="button" id="menu-logout-btn" class="main-menu-item" style="width:100%;background:none;border:none;cursor:pointer;text-align:left;padding:0;">
-                        <div class="main-menu-item__icon main-menu-item__icon--pink">
-                            <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                        </div>
-                        <span class="main-menu-text">로그아웃</span>
-                    </button>
-                </div>
+                <?php endif; ?>
 
                 <div class="main-menu-divider"></div>
+
+                <a href="./book.php" class="main-menu-item">
+                    <div class="main-menu-item__icon main-menu-item__icon--pink">
+                        <i class="fa-solid fa-book-open"></i>
+                    </div>
+                    <span class="main-menu-text">교재 PDF</span>
+                </a>
+
+                <a href="./tree.php" class="main-menu-item">
+                    <div class="main-menu-item__icon main-menu-item__icon--yellow">
+                        <i class="fa-solid fa-tree"></i>
+                    </div>
+                    <span class="main-menu-text">나의 나무</span>
+                </a>
 
                 <a href="./notice.php" class="main-menu-item">
                     <div class="main-menu-item__icon main-menu-item__icon--yellow">
@@ -922,8 +930,7 @@ $serverDataJson = json_encode($serverData, JSON_UNESCAPED_UNICODE | JSON_UNESCAP
 
                     <div class="ui-focus-right">
                         <div class="ui-focus-tabs">
-                            <button id="tab-basic" onclick="showUsageTab('basic')" class="tab-button ui-tab-half">Basic</button>
-                            <button id="tab-applied" onclick="showUsageTab('applied')" class="tab-button ui-tab-half">Applied</button>
+                            <button id="tab-basic" onclick="showUsageTab('basic')" class="tab-button ui-tab-full active">Basic</button>
                         </div>
 
                         <div class="ui-focus-panels">
@@ -932,13 +939,6 @@ $serverDataJson = json_encode($serverData, JSON_UNESCAPED_UNICODE | JSON_UNESCAP
                                     <div id="basic-usage-table" class="ui-tab-table"></div>
                                 </div>
                                 <div id="btn-wrapper-basic" class="ui-tab-buttons"></div>
-                            </div>
-
-                            <div id="tab-content-applied" class="tab-content hidden ui-tab-panel">
-                                <div class="ui-tab-scroll">
-                                    <div id="applied-usage-table" class="ui-tab-table"></div>
-                                </div>
-                                <div id="btn-wrapper-applied" class="ui-tab-buttons"></div>
                             </div>
                         </div>
                     </div>
@@ -1074,12 +1074,12 @@ $serverDataJson = json_encode($serverData, JSON_UNESCAPED_UNICODE | JSON_UNESCAP
             <i class="fa-solid fa-star clear-modal__star clear-modal__star--b animate-twinkle" style="animation-delay: 0.5s"></i>
         </div>
 
-        <h2 class="clear-modal__title">학습 완료!</h2>
-        <p class="clear-modal__desc">오늘 표현 7개를 모두 배웠어요! 🎉</p>
+        <h2 class="clear-modal__title">Mission Complete!</h2>
+        <p class="clear-modal__desc">씨앗을 모두 모았어요!</p>
 
         <button type="button" class="clear-modal__cta" onclick="finishVerb()">
-            <span>Together 보기</span>
-            <i class="fa-solid fa-wand-magic-sparkles clear-modal__cta-icon"></i>
+            <span>Get a Stamp!</span>
+            <i class="fa-solid fa-stamp clear-modal__cta-icon"></i>
         </button>
     </div>
 </div>
@@ -1204,70 +1204,5 @@ $serverDataJson = json_encode($serverData, JSON_UNESCAPED_UNICODE | JSON_UNESCAP
 
     </div>
 </div>
-
-<script>
-(function () {
-    fetch('/chunking-english/api/auth/check.php', { credentials: 'include' })
-        .then(r => r.json())
-        .then(d => {
-            if (d.logged_in) {
-                document.getElementById('menu-login-link').style.display = 'none';
-                const area = document.getElementById('menu-user-area');
-                area.style.display = '';
-                document.getElementById('menu-nickname').textContent = d.nickname || d.email || '사용자';
-                document.getElementById('menu-logout-btn').addEventListener('click', async () => {
-                    await fetch('/chunking-english/api/auth/logout.php', { method: 'POST', credentials: 'include' });
-                    location.href = '/chunking-english/login.php';
-                });
-            }
-        })
-        .catch(() => {});
-})();
-</script>
-
-<!-- ── 조회수 배지 ── -->
-<div id="view-counter" style="
-    display:none;
-    position:fixed; bottom:20px; right:20px; z-index:9999;
-    background:rgba(0,0,0,.62); color:#fff;
-    padding:8px 14px; border-radius:20px;
-    font-size:.8rem; font-family:'Noto Sans KR',sans-serif;
-    backdrop-filter:blur(4px); pointer-events:none;
-    white-space:nowrap; letter-spacing:-.2px;
-"></div>
-
-<script>
-// defer 스크립트(script.js) 실행 후 openDayIntro를 래핑
-// defer 스크립트는 DOMContentLoaded 직전에 실행되므로 DOMContentLoaded 리스너 내에서 안전하게 래핑 가능
-document.addEventListener('DOMContentLoaded', function() {
-    if (typeof openDayIntro !== 'function') return;
-
-    const _orig = openDayIntro;
-    window.openDayIntro = function(day) {
-        _orig(day);
-        _recordView(day);
-    };
-});
-
-function _recordView(day) {
-    fetch('/chunking-english/api/stats/record_view.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ day_number: day }),
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        if (data && data.total_views !== undefined) {
-            var badge = document.getElementById('view-counter');
-            if (badge) {
-                badge.textContent = 'Day ' + day + ' · 조회 ' + data.total_views.toLocaleString() + '회';
-                badge.style.display = 'block';
-            }
-        }
-    })
-    .catch(function() {});
-}
-</script>
 </body>
 </html>
