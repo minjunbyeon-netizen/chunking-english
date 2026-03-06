@@ -1,0 +1,97 @@
+================================================================
+  청킹잉글리시 - 디버깅 잔여 이슈 목록
+  작성일: 2026-03-06
+================================================================
+
+----------------------------------------------------------------
+[완료된 수정 내역 - 이번 세션]
+----------------------------------------------------------------
+- 로그아웃 후 재로그인 시 Day 완료 스탬프 미표시 → completedDays 기준으로 수정
+- 로그인 후 currentDay 항상 1 → 마지막 완료 Day+1 로 초기화
+- openDayIntro() 버그 → .mission-day[data-day] DOM 탐색 실패로 Day 2,3... 진입 불가 → 수정
+- Day 2~9 자물쇠 클릭 불가 → disabled/aria-disabled/station--locked 미제거 → 수정
+- Day 2~9 unlock 시 배지 자물쇠 아이콘 유지 → 티켓 아이콘으로 복원 추가
+- Day 완료 별점 항상 0 → DB completedDays 기준 풀스타 반영
+- Day 1 station-wrap id 누락으로 별점 업데이트 스킵 → id="station-wrap-1" 추가
+- book.php 이미지/오디오 DB 경로 없을 시 규칙 기반 폴백 없음 → 추가
+- Listen & Repeat 오디오 카드 인덱스 불일치 → activeCardIndex 기준으로 수정
+- 모달 닫아도 오디오 계속 재생 → closeFocusOverlay 시 stop 추가
+- Win 모달 중복 표시 → completedVerbs.has() 가드 추가
+- finishVerb 후 오디오 재생 유지 → isAudioPlaying = false 추가
+
+----------------------------------------------------------------
+[잔여 이슈 - 수정 필요]
+----------------------------------------------------------------
+
+[1] 관리자 페이지 인증 없음 (Critical - 배포 전 필수)
+    파일: admin/_auth.php
+    현상: 파일 내용이 완전히 비어있음 (주석만 있음)
+          누구나 /chunking-english/admin/ 직접 접속 가능
+          사용자 전체 목록, DB 동기화, 지자체 정보 모두 노출됨
+    수정 방향: 관리자 세션 또는 IP 기반 접근 제어 추가
+               예) $_SESSION['is_admin'] 체크 또는 특정 IP만 허용
+
+[2] together.html openDetail 타이밍 경쟁 조건 (High)
+    파일: js/script.js (finishVerb 함수 내)
+    현상: Day 완료 후 투게더 모달 열릴 때 해당 Day 직접 진입 안 될 수 있음
+    원인: iframe src 설정 후 300ms 뒤 openDetail() 호출
+          Firebase + CDN 4개 로드 시간이 300ms 초과하면 함수 미정의 → 그리드로 열림
+    수정 방향:
+          const tFrame = document.getElementById('together-frame');
+          tFrame.onload = () => {
+              if (typeof tFrame.contentWindow.openDetail === 'function') {
+                  tFrame.contentWindow.openDetail(currentDay);
+              }
+          };
+          tFrame.src = "./together.html";
+
+[3] currentDay가 totalMapDays(9) 초과 시 기차 사라짐 (High)
+    파일: js/script.js (초기화 라인)
+    현상: 9개 Day 모두 완료한 유저 재로그인 시 currentDay = 10
+          맵에 노드가 9개뿐이므로 placeTrainAtDay(10) 좌표 없음 → 기차 미표시
+    수정 방향:
+          let currentDay = Math.min(
+              window.SERVER_DATA.progress.currentDay || 1,
+              totalMapDays
+          );
+    주의: totalMapDays는 const로 선언되어 있으므로 초기화 순서 확인 필요
+          (currentDay 선언이 totalMapDays 선언 아래에 있으므로 문제 없음)
+
+[4] Resend API 키 GitHub에 공개 노출 (Medium - 배포 전 필수)
+    파일: config/db.php
+    현상: RESEND_API_KEY 값이 코드에 하드코딩되어 GitHub public repo에 노출
+    수정 방향:
+          .env 파일로 분리하고 .gitignore에 추가
+          또는 config/db.php 자체를 .gitignore에 추가하고
+          config/db.example.php 만 커밋 (이미 db.example.php 존재함)
+          config/db.php → .gitignore 에 추가
+
+[5] day_mp3_merged.php - MP3 바이너리 단순 합산 (Medium)
+    파일: api/download/day_mp3_merged.php
+    현상: file_get_contents로 읽은 바이너리를 그냥 이어붙여 하나의 MP3로 제공
+          CBR MP3는 대체로 재생되나 파일 간 접합부에서 잡음/끊김 발생 가능
+          Content-Length도 strlen() 기준이라 멀티바이트 환경에서 오차 있음
+    수정 방향:
+          서버에 ffmpeg 설치 후 concat 필터 사용
+          또는 PHP에서 각 파일 ID3 헤더 제거 후 합산 (복잡)
+          임시 방편: Content-Length를 strlen() 대신 mb_strlen($merged, '8bit') 로 변경
+
+[6] totalMapDays = 9 하드코딩 (Low)
+    파일: js/script.js
+    현상: DB에 Day가 늘어나도 맵은 항상 9개 노드로 고정
+    수정 방향:
+          HTML 맵 노드도 PHP로 동적 생성하거나
+          totalMapDays = Object.keys(levelData).length 로 동적화
+          단, 현재 HTML 정적 구조와 충돌 가능성 있어 대규모 리팩토링 필요
+
+----------------------------------------------------------------
+[참고 - 현재 구조 요약]
+----------------------------------------------------------------
+- 맵: 9개 정적 노드 (index.php HTML에 하드코딩)
+- 콘텐츠: DB에서 Day 1~50 로드 (levelData)
+- 진도: progress 테이블 (user_id, day_id, completed)
+- 오디오: asset/audio/day N/NN. verb/expression.mp3 규칙
+- 이미지: asset/img/day N/NN. verb/expression.png 규칙
+- 관리자: admin/ (현재 인증 없음)
+- 다운로드: api/download/ (ZIP, MP3 병합)
+================================================================

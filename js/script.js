@@ -38,7 +38,7 @@ const totalMapDays = 9;
 const stationMaxDays = {1: 10, 2: 19, 3: 58, 4: 12, 5: 39, 6: 55, 7: 31, 8: 10, 9: 16};
 let currentView = 'map';
 let currentVerb = '';
-let currentDay = window.SERVER_DATA.progress.currentDay || 1;
+let currentDay = Math.min(window.SERVER_DATA.progress.currentDay || 1, totalMapDays);
 let pendingTreeModal = false;
 let pendingTogetherModal = false;
 let collectedIndices = new Set();
@@ -1828,13 +1828,17 @@ function finishVerb() {
         }).catch(() => {}); // 비로그인 시 무시
 
         setTimeout(() => {
+            const tFrame = document.getElementById('together-frame');
+            const dayToOpen = currentDay;
+            if (tFrame) {
+                tFrame.onload = () => {
+                    if (typeof tFrame.contentWindow.openDetail === 'function') {
+                        tFrame.contentWindow.openDetail(dayToOpen);
+                    }
+                    tFrame.onload = null; // 한 번만 실행
+                };
+            }
             openTogetherModal();
-            setTimeout(() => {
-                const tFrame = document.getElementById('together-frame');
-                if (tFrame && tFrame.contentWindow && typeof tFrame.contentWindow.openDetail === 'function') {
-                    tFrame.contentWindow.openDetail(currentDay);
-                }
-            }, 300);
         }, 1500);
     }
 }
