@@ -513,7 +513,7 @@ $serverDataJson = json_encode($serverData, JSON_UNESCAPED_UNICODE | JSON_UNESCAP
                             <div  class="map-nodes--grid">
 
                                 <!-- 카드 오픈 -->
-                                <div class="station-wrap node-item">
+                                <div class="station-wrap node-item" id="station-wrap-1">
                                     <div class="map-station-point" id="track-anchor-1"></div>
                                     <button id="node-day-1" class="station-btn" data-day="1">
                                         <div class="station-box-frame">

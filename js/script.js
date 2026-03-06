@@ -786,8 +786,10 @@ function hydrateStationsFromLevelData() {
             if (data.image) video.setAttribute('poster', data.image);
         }
 
-        // stars 주입 (기존 starsHtml 로직 그대로)
-        const completedCount = dayProgress[i] ? dayProgress[i].length : 0;
+        // stars 주입 - 완료된 Day는 DB completedDays 기준으로 풀스타 표시
+        const completedCount = completedDays.has(i)
+            ? (levelData[i].verbs ? levelData[i].verbs.length : 3)
+            : (dayProgress[i] ? dayProgress[i].length : 0);
         const starsWrap = btn.querySelector('.station-stars');
         if (starsWrap) {
             let starsHtml = '';
@@ -820,6 +822,14 @@ function hydrateStationsFromLevelData() {
             btn.removeAttribute('disabled');
             btn.removeAttribute('aria-disabled');
             wrap.classList.remove('station--locked');
+            // 배지 아이콘 자물쇠 → 티켓으로 복원
+            const badge = btn.querySelector('.station-badge');
+            if (badge) {
+                badge.classList.remove('station-badge--locked', 'bg-gray-300', 'border-gray-400');
+                badge.removeAttribute('aria-hidden');
+                const badgeIcon = badge.querySelector('i');
+                if (badgeIcon) badgeIcon.className = 'fa-solid fa-ticket';
+            }
             btn.onclick = () => openDayIntro(i);
         }
     }
