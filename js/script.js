@@ -67,6 +67,8 @@ let hasPlayedBasic = false;
 let introLoopCount = 0;
 let isIntroPlaying = false;
 const MAX_INTRO_LOOPS = 7;
+let introSentences = [];
+let introCurrentIndex = 0;
 
 // Tree Logic Variables
 let treeCanvas, ctx;
@@ -1122,106 +1124,7 @@ function startDrill(verbKey) {
     }
 }
 
-function openIntroReadingModal(index) {
-    const modal = document.getElementById('intro-reading-modal');
-    if (!modal) {
-        switchView('drill');
-        return;
-    }
-
-    const chunks = getChunksForVerb(currentVerb);
-    if (!chunks || chunks.length === 0) {
-        switchView('drill');
-        return;
-    }
-
-    introLoopCount = 0;
-    isIntroPlaying = true;
-
-    modal.classList.remove('is-hidden');
-    setTimeout(() => showIntroExpression(0), 400);
-}
-
-// 7개 표현을 순서대로 하나씩 보여주고 오디오/TTS 재생
-function showIntroExpression(index) {
-    if (!isIntroPlaying) return;
-
-    const chunks = getChunksForVerb(currentVerb);
-    if (index >= chunks.length) {
-        finishIntroReading();
-        return;
-    }
-
-    const data = chunks[index];
-    if (!data || !data.eng) {
-        finishIntroReading();
-        return;
-    }
-
-    const sentence = `I ${data.eng}.`;
-
-    const imgEl = document.getElementById('intro-big-img');
-    const engEl = document.getElementById('intro-big-eng');
-    const korEl = document.getElementById('intro-big-kor');
-
-    if (imgEl) imgEl.src = data.image || './img/exc_n1.png';
-    if (engEl) engEl.textContent = sentence;
-    if (korEl) korEl.textContent = data.kor || '';
-
-    updateIntroUI(index + 1, chunks.length);
-
-    const onDone = () => {
-        if (isIntroPlaying) setTimeout(() => showIntroExpression(index + 1), 600);
-    };
-
-    if (data.audio) {
-        _introAudio = new Audio(data.audio);
-        _introAudio.onended = onDone;
-        _introAudio.onerror = () => playIntroTTS(sentence, onDone);
-        _introAudio.play().catch(() => playIntroTTS(sentence, onDone));
-    } else {
-        _introAudio = null;
-        playIntroTTS(sentence, onDone);
-    }
-}
-
-function playIntroTTS(text, onDone) {
-    window.speechSynthesis.cancel();
-    const ut = new SpeechSynthesisUtterance(text);
-    ut.lang = 'en-US';
-    ut.rate = 0.85;
-    ut.onend = onDone;
-    window.speechSynthesis.speak(ut);
-}
-
-function updateIntroUI(current, total) {
-    const t = total || MAX_INTRO_LOOPS;
-    document.getElementById('intro-read-count').textContent = current;
-    const totalEl = document.querySelector('.intro-modal__count-total');
-    if (totalEl) totalEl.textContent = `/ ${t}`;
-    const percent = (current / t) * 100;
-    document.getElementById('intro-progress-bar').style.width = `${percent}%`;
-}
-
-let _introAudio = null; // 현재 재생 중인 intro 오디오 참조
-let _cardAudioUrl = null; // 현재 카드 MP3 URL (있으면 TTS 대신 사용)
-
-function skipIntroReading() {
-    isIntroPlaying = false;
-    window.speechSynthesis.cancel();
-    if (_introAudio) { _introAudio.pause(); _introAudio = null; }
-    finishIntroReading();
-}
-
-function finishIntroReading() {
-    isIntroPlaying = false;
-    document.getElementById('intro-reading-modal').classList.add('is-hidden');
-    switchView('drill');
-
-    // 자동 가이드 띄우지 않음
-    // hasShownDrillGuide = true; // 원하면 여기서 true 처리
-}
-
+function openIntroReadingModal(index) {    const modal = document.getElementById("intro-reading-modal");    if (!modal) { switchView("drill"); return; }    const chunks = getChunksForVerb(currentVerb);    if (!chunks || !chunks.length) { switchView("drill"); return; }    introSentences = [];    chunks.forEach(function(data) {        if (!data || !data.eng) return;        var details = getSeedDetail(data.eng);        var sentence = (details && details.basic && details.basic[0] && details.basic[0].example)            ? details.basic[0].example : "I " + data.eng + ".";        introSentences.push({            text: sentence,            eng: data.eng,            kor: data.kor || "",            image: data.image || "./img/exc_n1.png",            audio: data.audio || null        });    });    if (!introSentences.length) { switchView("drill"); return; }    introCurrentIndex = 0;    isIntroPlaying = true;    showIntroCard(0);    updateIntroUI(0);    modal.classList.remove("is-hidden");    setTimeout(function() { playIntroSequence(); }, 500);}function showIntroCard(idx) {    var item = introSentences[idx];    if (!item) return;    var imgEl = document.getElementById("intro-big-img");    var engEl = document.getElementById("intro-big-eng");    var korEl = document.getElementById("intro-big-kor");    if (imgEl) imgEl.src = item.image;    if (engEl) engEl.textContent = item.text;    if (korEl) korEl.textContent = item.kor;}function playIntroSequence() {    if (!isIntroPlaying) return;    if (introCurrentIndex >= introSentences.length) { finishIntroReading(); return; }    var item = introSentences[introCurrentIndex];    showIntroCard(introCurrentIndex);    updateIntroUI(introCurrentIndex + 1);    if (item.audio) {        var audio = new Audio(item.audio);        audio.onended = function() { introCurrentIndex++; if (isIntroPlaying) setTimeout(function() { playIntroSequence(); }, 400); };        audio.onerror = function() { speakIntroTTS(item.text); };        audio.play().catch(function() { speakIntroTTS(item.text); });    } else { speakIntroTTS(item.text); }}function speakIntroTTS(text) {    var ut = new SpeechSynthesisUtterance(text);    ut.lang = "en-US"; ut.rate = 0.85;    ut.onend = function() { introCurrentIndex++; if (isIntroPlaying) setTimeout(function() { playIntroSequence(); }, 400); };    window.speechSynthesis.speak(ut);}function updateIntroUI(current) {    var total = introSentences.length;    document.getElementById("intro-read-count").textContent = current + " / " + total;    var percent = (current / total) * 100;    document.getElementById("intro-progress-bar").style.width = percent + "%";}function skipIntroReading() { window.speechSynthesis.cancel(); finishIntroReading(); }function finishIntroReading() {    isIntroPlaying = false;    document.getElementById("intro-reading-modal").classList.add("is-hidden");    switchView("drill");}
 function closeDrillGuide() {
     document.getElementById('drill-guide-modal').classList.add('hidden');
 }
@@ -1611,15 +1514,7 @@ function playFocusAudio(target) {
     audioQueue = [];
     audioHighlightIndices = [];
 
-    // 이 카드의 표현을 "I [표현]." 형태로 7번 반복
-    const cardData = getChunksForVerb(currentVerb)[activeCardIndex];
-    const cardAudio = cardData && cardData.audio ? cardData.audio : null;
-    const sentence = `I ${chunkEng}.`;
-    for (let i = 0; i < 7; i++) {
-        audioQueue.push(sentence);
-        audioHighlightIndices.push(activeCardIndex);
-    }
-    _cardAudioUrl = cardAudio; // MP3 있으면 첫 재생에 사용
+// 해당 카드의 문장(I ...)을 7번 반복 재생    var sentence = detailData.basic[0].example;    for (var i = 0; i < 7; i++) {        audioQueue.push(sentence);        audioHighlightIndices.push(activeCardIndex);    }
 
     currentAudioTarget = 'top';
     initAudioPlayer();
@@ -1648,7 +1543,6 @@ function playTableAudio(type) {
             detailData.basic.forEach(item => audioQueue.push(item.example));
         }
 
-        _cardAudioUrl = null;
         currentAudioTarget = type;
         initAudioPlayer();
     }, 50);
@@ -1692,34 +1586,13 @@ function speakNextChunk() {
     }
     updateAudioUI();
     const text = audioQueue[audioIndex];
-    const onDone = () => { audioIndex++; if (isAudioPlaying) speakNextChunk(); };
-
-    // 카드 오디오 모드이고 MP3가 있으면 MP3 재생
-    if (currentAudioTarget === 'top' && _cardAudioUrl) {
-        const mp3 = new Audio(_cardAudioUrl);
-        mp3.onended = onDone;
-        mp3.onerror = () => {
-            // MP3 실패 시 TTS 폴백
-            const ut = new SpeechSynthesisUtterance(text);
-            ut.lang = 'en-US'; ut.rate = 0.85;
-            ut.onend = onDone;
-            ut.onerror = () => stopAudioPlayer();
-            window.speechSynthesis.speak(ut);
-        };
-        mp3.play().catch(() => {
-            const ut = new SpeechSynthesisUtterance(text);
-            ut.lang = 'en-US'; ut.rate = 0.85;
-            ut.onend = onDone;
-            ut.onerror = () => stopAudioPlayer();
-            window.speechSynthesis.speak(ut);
-        });
-        return;
-    }
-
     const ut = new SpeechSynthesisUtterance(text);
     ut.lang = 'en-US';
     ut.rate = 0.85;
-    ut.onend = onDone;
+    ut.onend = function () {
+        audioIndex++;
+        if (isAudioPlaying) speakNextChunk();
+    };
     ut.onerror = function (e) {
         console.error('TTS Error', e);
         stopAudioPlayer();
@@ -1780,12 +1653,7 @@ function updateAudioUI() {
     if (!container) return;
 
     // 전체 문장 개수
-    const totalSentences = audioHighlightIndices.length > 0 ? [...new Set(audioHighlightIndices)].length : 1;
-
-    // 현재 몇 번째 문장을 읽고 있는지 계산
-    let currentSentenceNum = Math.floor(audioIndex / 7) + 1;
-    if (currentSentenceNum > totalSentences) currentSentenceNum = totalSentences;
-
+var totalSentences = audioQueue.length;    var currentSentenceNum = Math.min(audioIndex + 1, totalSentences);
     // 진행 바 게이지 퍼센트
     const percent = ((audioIndex) / audioQueue.length) * 100;
 
@@ -1997,7 +1865,8 @@ function renderTogetherGrid() {
 
     const completedDaysArray = Array.from(completedDays);
     const completedDaysSet = completedDays;
-    const accessibleUpTo = 250; // 모든 day 접근 가능
+    const maxCompletedDay = completedDaysArray.length > 0 ? Math.max(...completedDaysArray) : 0;
+    const accessibleUpTo = Math.max(maxCompletedDay + 1, 1); // 완료된 다음 day(현재 진행중)까지 접근 가능
 
     for (let i = 1; i <= 250; i++) {
         const btn = document.createElement('button');
@@ -2067,21 +1936,11 @@ function openTogetherDetail(day) {
 function generateTogetherSentences(day) {
     const container = document.getElementById('together-sentences-container');
     container.innerHTML = '';
-    // togetherData 없으면 해당 day의 masterChunkData에서 대표 표현으로 자동 생성
-    let sentences = togetherData[day];
-    if (!sentences) {
-        const dayVerbs = (levelData[day] && levelData[day].verbs) || [];
-        sentences = [];
-        dayVerbs.forEach(verbKey => {
-            const chunks = getChunksForVerb(verbKey);
-            if (chunks && chunks.length > 0) {
-                sentences.push({ eng: `I ${chunks[0].eng}.`, kor: chunks[0].kor || '' });
-            }
-        });
-        if (sentences.length === 0) {
-            sentences = [{eng: "Coming Soon...", kor: "준비 중입니다..."}];
-        }
-    }
+    const sentences = togetherData[day] || [
+        {eng: "Coming Soon...", kor: "준비 중입니다..."},
+        {eng: "Keep Learning!", kor: "계속 학습하세요!"},
+        {eng: "You can do it!", kor: "당신은 할 수 있어요!"}
+    ];
     sentences.forEach((item, index) => {
         const card = document.createElement('div');
         card.className = "together-sentence-card group";
@@ -3114,3 +2973,10 @@ function openVerb(verbKey){
 }
 window.openVerb = openVerb;
 if (typeof openCard === 'function') window.openCard = openCard;
+
+/** 로그아웃 */
+function doLogout() {
+    if (confirm('로그아웃 하시겠습니까?')) {
+        location.href = './api/auth/logout.php';
+    }
+}

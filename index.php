@@ -1,6 +1,7 @@
 <?php
 require_once 'config/db.php';
-require_once 'config/auth.php';
+if (session_status() === PHP_SESSION_NONE) session_start();
+ = empty(['user_id']);
 
 // ── DB에서 Day 1~50 전체 데이터 로드 ──────────────────────────────────────────
 $stmt = $pdo->query("
@@ -12,7 +13,7 @@ $stmt = $pdo->query("
     FROM days d
     JOIN verbs v ON v.day_id = d.id
     JOIN expressions e ON e.verb_id = v.id
-    WHERE d.day_number BETWEEN 1 AND 250
+    WHERE d.day_number BETWEEN 1 AND 50
       AND d.is_active = 1
       AND v.verb_en REGEXP '^[a-zA-Z]'
     ORDER BY d.day_number, v.order_num, e.order_num
@@ -95,7 +96,7 @@ $serverDataJson = json_encode($serverData, JSON_UNESCAPED_UNICODE | JSON_UNESCAP
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Chewy&family=Quicksand:wght@400;600;700&family=Jua&family=Gowun+Dodum&family=Press+Start+2P&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=<?= filemtime(__DIR__.'/css/style.css') ?>">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -116,10 +117,10 @@ $serverDataJson = json_encode($serverData, JSON_UNESCAPED_UNICODE | JSON_UNESCAP
     <link href="https://fonts.googleapis.com/css2?family=Chewy&family=Jua&family=Noto+Sans+KR:wght@100..900&family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
 
     <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
-    <script src="./js/fonts.js"></script>
+    <script src="./js/fonts.js?v=<?= filemtime(__DIR__.'/js/fonts.js') ?>"></script>
 
-    <script src="./js/tailwind-config.js"></script>
-    <script src="js/script.js" defer></script>
+    <script src="./js/tailwind-config.js?v=<?= filemtime(__DIR__.'/js/tailwind-config.js') ?>"></script>
+    <script src="js/script.js?v=<?= filemtime(__DIR__.'/js/script.js') ?>" defer></script>
 
 
     <script>
@@ -128,26 +129,6 @@ $serverDataJson = json_encode($serverData, JSON_UNESCAPED_UNICODE | JSON_UNESCAP
 
 </head>
 <body class="font-body text-brand-text antialiased bg-brand-cream">
-
-<?php if (!empty($_SESSION['user_id'])): ?>
-<a href="./api/auth/logout.php" style="
-    position:fixed; top:120px; right:16px; z-index:200;
-    display:flex; align-items:center; gap:8px;
-    padding:0 16px; height:40px;
-    background:rgba(255,255,255,0.8);
-    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
-    border:1px solid rgba(255,255,255,0.6);
-    border-radius:9999px;
-    box-shadow:0 4px 10px rgba(255,143,163,0.2);
-    color:#2D2D2D; font-size:14px;
-    text-decoration:none;
-    transition:transform .3s ease-out, box-shadow .3s ease-out, color .3s ease-out;
-" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 25px rgba(255,143,163,0.4)';this.style.color='#FF8FA3'"
-   onmouseout="this.style.transform='';this.style.boxShadow='0 4px 10px rgba(255,143,163,0.2)';this.style.color='#2D2D2D'">
-    <i class="fa-solid fa-arrow-right-from-bracket"></i>
-    <span>로그아웃</span>
-</a>
-<?php endif; ?>
 
 <div id="main-menu-container" class="fixed top-4 left-4 md:top-6 md:left-6 z-[200]">
     <div class="relative">
@@ -211,6 +192,7 @@ $serverDataJson = json_encode($serverData, JSON_UNESCAPED_UNICODE | JSON_UNESCAP
         <div class="together-icon">
             <i class="fa-solid fa-wand-magic-sparkles"></i>
         </div>
+<?php if (!$isGuest): ?><div class="logout-fixed">    <button class="logout-btn" onclick="doLogout()" title="로그아웃">        <div class="logout-icon">            <i class="fa-solid fa-right-from-bracket"></i>        </div>        <span class="logout-text">Logout</span>    </button></div><?php endif; ?>
 
         <div class="together-text">
             <span class="together-title">Together</span>
@@ -1235,5 +1217,67 @@ $serverDataJson = json_encode($serverData, JSON_UNESCAPED_UNICODE | JSON_UNESCAP
 
     </div>
 </div>
+<?php if ($isGuest): ?>
+<div id="guest-login-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);backdrop-filter:blur(6px);align-items:center;justify-content:center">
+  <div style="position:relative;background:#fff;border:4px solid #2D2D2D;border-radius:40px;padding:50px 40px;box-shadow:12px 12px 0 #2D2D2D;width:100%;max-width:400px;margin:20px;font-family:Jua,sans-serif">
+    <button id="guestCloseBtn" style="position:absolute;top:16px;right:20px;background:none;border:none;font-size:1.5rem;color:#9CA3AF;cursor:pointer;padding:4px 8px"><i class="fa-solid fa-xmark"></i></button>
+    <h2 style="font-family:Chewy,cursive;font-size:2rem;text-align:center;margin-bottom:8px;color:#2D2D2D;text-shadow:3px 3px 0 #FF8FA3">chunking english<br>kids&mom</h2>
+    <p style="text-align:center;color:#9CA3AF;font-size:0.85rem;margin-bottom:24px">로그인 후 이용할 수 있어요!</p>
+    <form id="guestLoginForm">
+      <label style="display:block;color:#2D2D2D;font-size:1rem;margin-bottom:10px;padding-left:5px">이메일</label>
+      <input type="email" id="guestEmail" placeholder="이메일 입력" required style="width:100%;height:55px;border:3px solid #2D2D2D;border-radius:20px;padding:0 20px;font-size:1.1rem;outline:none;margin-bottom:20px;box-sizing:border-box">
+      <label style="display:block;color:#2D2D2D;font-size:1rem;margin-bottom:10px;padding-left:5px">비밀번호</label>
+      <input type="password" id="guestPassword" placeholder="비밀번호 입력" required style="width:100%;height:55px;border:3px solid #2D2D2D;border-radius:20px;padding:0 20px;font-size:1.1rem;outline:none;margin-bottom:20px;box-sizing:border-box">
+      <div id="guestLoginError" style="color:#FA4252;font-size:0.85rem;margin-bottom:8px;display:none;text-align:center"></div>
+      <button type="submit" style="width:100%;height:60px;background:#FF8FA3;color:#fff;border:3px solid #2D2D2D;border-radius:22px;font-size:1.4rem;font-family:Jua,sans-serif;cursor:pointer;box-shadow:0 6px 0 #2D2D2D;display:flex;align-items:center;justify-content:center">ENTER</button>
+    </form>
+    <a href="find_password.php" style="display:block;text-align:center;margin-top:20px;color:#9CA3AF;font-size:0.9rem;text-decoration:none">비밀번호 찾기</a>
+  </div>
+</div>
+<script>
+(function(){
+  var ol = document.getElementById("guest-login-overlay");
+  var triggered = false;
+  var cooldown = false;
+
+  function showLogin() {
+    if (triggered || cooldown) return;
+    triggered = true;
+    ol.style.display = "flex";
+  }
+
+  document.getElementById("guestCloseBtn").addEventListener("click", function(e) {
+    e.stopPropagation();
+    ol.style.display = "none";
+    triggered = false;
+    cooldown = true;
+    setTimeout(function(){ cooldown = false; }, 500);
+  });
+
+  ol.addEventListener("click", function(e) { e.stopPropagation(); });
+
+  window.addEventListener("scroll", function() { if (window.scrollY > 50) showLogin(); }, {passive:true});
+  document.addEventListener("click", function(e) {
+    if (e.target.closest("#logo-container") || e.target.closest(".logo-layer")) return;
+    showLogin();
+  });
+
+  document.getElementById("guestLoginForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    var errEl = document.getElementById("guestLoginError");
+    errEl.style.display = "none";
+    try {
+      var res = await fetch("./api/auth/login.php", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({email:document.getElementById("guestEmail").value.trim(), password:document.getElementById("guestPassword").value})
+      });
+      var data = await res.json();
+      if (data.success) { location.reload(); } else { errEl.textContent = data.error || "로그인 실패"; errEl.style.display = "block"; }
+    } catch(err) { errEl.textContent = "서버 오류가 발생했습니다."; errEl.style.display = "block"; }
+  });
+})();
+</script>
+<?php endif; ?>
 </body>
 </html>

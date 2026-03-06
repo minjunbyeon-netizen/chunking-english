@@ -5068,3 +5068,72 @@ body { overflow-x: hidden; min-height: 100vh; display: flex; flex-direction: col
         transition: all 0.3s ease-out !important;
     }
 }
+/* =========================================
+   로그아웃 플로팅 버튼
+   ========================================= */
+.logout-fixed {
+    position: fixed;
+    top: 130px;
+    right: 24px;
+    z-index: 50;
+    animation: float 3s ease-in-out infinite;
+    animation-delay: 0.5s;
+}
+
+.logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    border: 2px solid #2D2D2D;
+    border-radius: 999px;
+    padding: 6px 14px 6px 8px;
+    cursor: pointer;
+    transition: all .2s ease;
+    box-shadow: 4px 4px 0 rgba(45,45,45,.1);
+}
+
+.logout-btn:hover {
+    border-color: #FF5C77;
+    box-shadow: 6px 6px 0 rgba(255,92,119,.15);
+    transform: translateY(-2px);
+}
+
+.logout-btn:active {
+    transform: translateY(2px);
+    box-shadow: 2px 2px 0 rgba(45,45,45,.1);
+}
+
+.logout-icon {
+    width: 28px;
+    height: 28px;
+    background: #2D2D2D;
+    color: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    transition: background .2s;
+}
+
+.logout-btn:hover .logout-icon {
+    background: #FF5C77;
+}
+
+.logout-text {
+    font-family: "Chewy", "Jua", sans-serif;
+    font-size: 13px;
+    color: #2D2D2D;
+    line-height: 1;
+}
+
+@media (max-width: 768px) {
+    .logout-fixed {
+        top: auto;
+        bottom: 24px;
+        right: 24px;
+    }
+    .logout-text { display: none; }
+    .logout-btn { padding: 8px; }
+}

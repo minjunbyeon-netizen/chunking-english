@@ -116,6 +116,27 @@ $next_day = $day_num < 250 ? $day_num + 1 : null;
         .day-nav a.disabled { background: #888; pointer-events: none; }
         .day-nav span { color: white; font-size: 1.1rem; font-weight: 700; }
 
+        .btn-back {
+            background: #FFFFFF;
+            color: #2A2F32;
+            border: 2px solid #E5E7EB;
+            border-radius: 20px;
+            padding: 7px 18px;
+            font-family: 'Pretendard', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            display: flex; align-items: center; gap: 8px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+        .btn-back:hover {
+            border-color: #FF8FA3;
+            color: #FF5C77;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 126, 150, 0.2);
+        }
+
         .btn-pdf-download {
             background: #1F2937;
             color: white;
@@ -513,6 +534,9 @@ $next_day = $day_num < 250 ? $day_num + 1 : null;
 
 <!-- ── 상단 컨트롤 ── -->
 <div class="top-controls no-print">
+    <a href="./index.php" class="btn-back" title="홈으로 돌아가기">
+        <i class="fa-solid fa-arrow-left"></i> 돌아가기
+    </a>
     <div class="day-nav">
         <a href="?day=<?= $prev_day ?>" class="<?= $prev_day ? '' : 'disabled' ?>">
             <i class="fa-solid fa-chevron-left"></i> Day <?= $prev_day ?? '-' ?>
