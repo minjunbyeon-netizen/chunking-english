@@ -1076,6 +1076,7 @@ function backToMap() {
 }
 
 function exitDrillConfirmation() {
+    isAudioPlaying = false;
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
     }
@@ -1646,15 +1647,15 @@ function unlockKeepButton() {
 
     const totalRequired = getChunksForVerb(currentVerb).length;
     if (collectedIndices.size >= totalRequired) {
-        // 모든 카드 완료 → win 처리
+        // 모든 카드 완료 → win 처리 (이미 collectCardWithoutClosing에서 처리된 경우 중복 방지)
         if (!completedVerbs.has(currentVerb)) {
             completedVerbs.add(currentVerb);
             totalStars++;
             totalTrees++;
             if (!dayProgress[currentDay]) dayProgress[currentDay] = [];
             if (!dayProgress[currentDay].includes(currentVerb)) dayProgress[currentDay].push(currentVerb);
+            setTimeout(showWinModal, 300);
         }
-        setTimeout(showWinModal, 300);
     }
 }
 
@@ -1814,6 +1815,9 @@ function showWinModal() {
 
 function finishVerb() {
     document.getElementById('clear-modal').classList.add('is-hidden');
+    // 오디오 완전 종료 (unlockKeepButton 재호출 방지)
+    isAudioPlaying = false;
+    window.speechSynthesis.cancel();
     const verbsForDay = levelData[currentDay].verbs;
     const completedCount = verbsForDay.filter(v => completedVerbs.has(v)).length;
     const totalCount = verbsForDay.length;
