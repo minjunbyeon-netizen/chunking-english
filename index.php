@@ -1,7 +1,7 @@
 <?php
 require_once 'config/db.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
- = empty(['user_id']);
+$isGuest = empty($_SESSION['user_id']);
 
 // ── DB에서 Day 1~50 전체 데이터 로드 ──────────────────────────────────────────
 $stmt = $pdo->query("
