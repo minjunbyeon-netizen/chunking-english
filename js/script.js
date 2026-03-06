@@ -1527,7 +1527,12 @@ function playFocusAudio(target) {
     audioQueue = [];
     audioHighlightIndices = [];
 
-// 해당 카드의 문장(I ...)을 7번 반복 재생    var sentence = detailData.basic[0].example;    for (var i = 0; i < 7; i++) {        audioQueue.push(sentence);        audioHighlightIndices.push(activeCardIndex);    }
+    // 해당 카드 인덱스에 맞는 문장 (I/You/He/She/Do/Don't/Please)을 7번 반복 재생
+    var sentence = (detailData.basic[activeCardIndex] || detailData.basic[0]).example;
+    for (var i = 0; i < 7; i++) {
+        audioQueue.push(sentence);
+        audioHighlightIndices.push(activeCardIndex);
+    }
 
     currentAudioTarget = 'top';
     initAudioPlayer();
