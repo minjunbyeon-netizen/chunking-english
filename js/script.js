@@ -38,7 +38,7 @@ const totalMapDays = 9;
 const stationMaxDays = {1: 10, 2: 19, 3: 58, 4: 12, 5: 39, 6: 55, 7: 31, 8: 10, 9: 16};
 let currentView = 'map';
 let currentVerb = '';
-let currentDay = 1;
+let currentDay = window.SERVER_DATA.progress.currentDay || 1;
 let pendingTreeModal = false;
 let pendingTogetherModal = false;
 let collectedIndices = new Set();
@@ -998,28 +998,6 @@ document.addEventListener('click', (e) => {
 
 function openDayIntro(day) {
     currentDay = day;
-    const currentInternalDay = stationProgress[day];
-    const data = levelData[day];
-    document.getElementById('intro-day-number').textContent = currentInternalDay;
-    document.getElementById('intro-title').textContent = data.ride;
-    document.getElementById('intro-subtitle').textContent = data.title;
-    const grid = document.getElementById('mission-grid');
-
-// day 컨테이너만 보여주기
-    document.querySelectorAll('#mission-grid .mission-day')
-        .forEach(el => el.classList.add('hidden'));
-
-    const dayWrap = document.querySelector(`#mission-grid .mission-day[data-day="${day}"]`);
-    if (!dayWrap) return;
-
-    dayWrap.classList.remove('hidden');
-
-// 카드 업데이트만 수행
-    dayWrap.querySelectorAll('.mission-card[data-verb-key]').forEach(cardEl => {
-        const verbKey = cardEl.getAttribute('data-verb-key');
-        applyMissionStyle(cardEl, verbKey);
-    });
-    updateMissionStamps();
     switchView('intro');
 }
 

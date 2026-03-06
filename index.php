@@ -73,6 +73,12 @@ if (!empty($_SESSION['user_id'])) {
     $completedDays = array_column($ps->fetchAll(PDO::FETCH_ASSOC), 'day_number');
 }
 
+// 다음에 공부할 Day 계산 (완료한 Day 중 최대값 + 1, 없으면 1)
+$currentDay = 1;
+if (!empty($completedDays)) {
+    $currentDay = max(array_map('intval', $completedDays)) + 1;
+}
+
 $serverData = [
     'levelData'       => $levelData,
     'masterChunkData' => $masterChunkData,
@@ -81,6 +87,7 @@ $serverData = [
         'unlockedDays'    => 50,        // 전체 Day 열람 허용
         'completedVerbs'  => [],
         'completedDays'   => $completedDays,
+        'currentDay'      => $currentDay,
         'stationProgress' => [1=>1,2=>1,3=>1,4=>1,5=>1,6=>1,7=>1,8=>1,9=>1],
     ],
 ];
