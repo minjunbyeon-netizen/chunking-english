@@ -817,8 +817,10 @@ function hydrateStationsFromLevelData() {
         } else {
             btn.style.cursor = 'pointer';
             btn.classList.remove('grayscale', 'opacity-70');
+            btn.removeAttribute('disabled');
+            btn.removeAttribute('aria-disabled');
+            wrap.classList.remove('station--locked');
             btn.onclick = () => openDayIntro(i);
-            // unlocked이면 badge를 ticket로 되돌리기 등(필요시)
         }
     }
 }
