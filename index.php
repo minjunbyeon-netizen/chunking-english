@@ -73,18 +73,22 @@ if (!empty($_SESSION['user_id'])) {
     $completedDays = array_column($ps->fetchAll(PDO::FETCH_ASSOC), 'day_number');
 }
 
-// 다음에 공부할 Day 계산 (완료한 Day 중 최대값 + 1, 없으면 1)
-$currentDay = 1;
-if (!empty($completedDays)) {
-    $currentDay = max(array_map('intval', $completedDays)) + 1;
-}
+// 완료한 Day 최대값 계산
+$maxCompletedDay = empty($completedDays) ? 0 : max(array_map('intval', $completedDays));
+
+// 다음에 공부할 Day = 완료한 최대 Day + 1, 없으면 1
+$currentDay = $maxCompletedDay + 1;
+
+// 잠금 해제 범위: 완료한 Day까지 + 바로 다음 Day 1개만 열어줌
+// (Day 1이 아직 미완료면 Day 1만, Day N 완료면 Day N+1까지 열림)
+$unlockedDays = $maxCompletedDay + 1;
 
 $serverData = [
     'levelData'       => $levelData,
     'masterChunkData' => $masterChunkData,
-    'iconMap'         => (object)[],   // JS 코드에서 기본 아이콘 사용
+    'iconMap'         => (object)[],
     'progress'        => [
-        'unlockedDays'    => 50,        // 전체 Day 열람 허용
+        'unlockedDays'    => $unlockedDays,
         'completedVerbs'  => [],
         'completedDays'   => $completedDays,
         'currentDay'      => $currentDay,
