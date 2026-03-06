@@ -262,6 +262,7 @@ tbody tr:hover .vcell { background: #faeef1; }
         <a href="overview.php">전체 현황</a>
         <a href="organizations.php">지자체 관리</a>
         <a href="users.php">사용자 관리</a>
+        <a href="generate_audio.php">오디오 생성</a>
     </nav>
 </header>
 
