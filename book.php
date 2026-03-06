@@ -23,13 +23,35 @@ foreach ($verbs as &$verb) {
 }
 unset($verb);
 
-// 경로 → 웹 URL 변환
+// 경로 → 웹 URL 변환 (내부 헬퍼)
 function book_asset_url($path) {
     if (!$path) return null;
     $clean = str_replace('\\', '/', $path);
     if (!file_exists(__DIR__ . '/' . $clean)) return null;
     $parts = explode('/', $clean);
     return './' . implode('/', array_map('rawurlencode', $parts));
+}
+
+// 이미지 URL: DB 경로 우선, 없으면 파일명 규칙 기반 폴백
+function book_img_url($expr, $verb, $day_num) {
+    $url = book_asset_url($expr['image_path'] ?? null);
+    if ($url) return $url;
+    $gv   = str_pad($verb['global_num'], 2, '0', STR_PAD_LEFT);
+    $slug = str_replace(' ', '_', $expr['expression_en']);
+    $rel  = "asset/img/day {$day_num}/{$gv}. {$verb['verb_en']}/{$slug}.png";
+    if (!file_exists(__DIR__ . '/' . $rel)) return null;
+    return './' . implode('/', array_map('rawurlencode', explode('/', $rel)));
+}
+
+// 오디오 URL: DB 경로 우선, 없으면 파일명 규칙 기반 폴백
+function book_audio_url($expr, $verb, $day_num) {
+    $url = book_asset_url($expr['audio_path'] ?? null);
+    if ($url) return $url;
+    $gv   = str_pad($verb['global_num'], 2, '0', STR_PAD_LEFT);
+    $slug = str_replace(' ', '_', $expr['expression_en']);
+    $rel  = "asset/audio/day {$day_num}/{$gv}. {$verb['verb_en']}/{$slug}.mp3";
+    if (!file_exists(__DIR__ . '/' . $rel)) return null;
+    return './' . implode('/', array_map('rawurlencode', explode('/', $rel)));
 }
 
 $prev_day = $day_num > 1  ? $day_num - 1 : null;
@@ -594,7 +616,7 @@ $next_day = $day_num < 250 ? $day_num + 1 : null;
 
         <section class="chunk-grid">
             <?php foreach ($verb['expressions'] as $ei => $expr):
-                $img = book_asset_url($expr['image_path']);
+                $img = book_img_url($expr, $verb, $day_num);
                 $is_main = ($ei === 0);
             ?>
             <div class="chunk-card <?= $is_main ? 'main-point' : '' ?>">
@@ -663,7 +685,7 @@ $next_day = $day_num < 250 ? $day_num + 1 : null;
             ?>
             <div class="verb-divider"><?= htmlspecialchars($verb['verb_en']) ?> · <?= htmlspecialchars($verb['verb_kr']) ?></div>
             <?php foreach ($verb['expressions'] as $ei => $expr):
-                $aurl = book_asset_url($expr['audio_path'] ?? null);
+                $aurl = book_audio_url($expr, $verb, $day_num);
             ?>
             <div class="magic-card" <?= $aurl ? 'data-audio-url="'.htmlspecialchars($aurl).'"' : '' ?>>
                 <div class="magic-number-tag"><?= $card_num++ ?></div>
