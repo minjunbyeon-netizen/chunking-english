@@ -1451,7 +1451,20 @@ function closeFocusOverlay() {
         overlay.classList.add('hidden');
         overlay.style.display = '';
     }
+    // 오디오 플래그 먼저 꺼서 재귀 콜백 차단
+    isAudioPlaying = false;
+    isPreviewAudioPlaying = false;
+    previewAudioCount = 0;
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    // UI 복구
+    const audioBtn = document.querySelector('.audio-ui-active');
+    if (audioBtn) audioBtn.remove();
+    const listenBtn = document.querySelector('.ui-mobile-preview-listen-btn');
+    if (listenBtn) listenBtn.classList.remove('is-playing');
+    const countSpan = document.getElementById('preview-listen-count');
+    if (countSpan) countSpan.classList.add('is-hidden');
+    currentAudioTarget = '';
+    audioIndex = 0;
 }
 
 // Audio Player Logic
