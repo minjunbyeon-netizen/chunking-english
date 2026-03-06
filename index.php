@@ -1290,5 +1290,20 @@ $serverDataJson = json_encode($serverData, JSON_UNESCAPED_UNICODE | JSON_UNESCAP
 })();
 </script>
 <?php endif; ?>
+
+<!-- 관리자 진입 버튼 (희미하게 고정) -->
+<a href="admin/index.php" title="관리자" style="
+    position: fixed;
+    left: 12px;
+    bottom: 12px;
+    z-index: 9999;
+    font-size: 10px;
+    color: rgba(150,130,135,0.25);
+    text-decoration: none;
+    letter-spacing: .05em;
+    transition: color .3s;
+    user-select: none;
+" onmouseover="this.style.color='rgba(150,130,135,0.6)'" onmouseout="this.style.color='rgba(150,130,135,0.25)'">admin</a>
+
 </body>
 </html>
