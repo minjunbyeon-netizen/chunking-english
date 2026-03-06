@@ -1204,6 +1204,7 @@ function updateIntroUI(current, total) {
 }
 
 let _introAudio = null; // 현재 재생 중인 intro 오디오 참조
+let _cardAudioUrl = null; // 현재 카드 MP3 URL (있으면 TTS 대신 사용)
 
 function skipIntroReading() {
     isIntroPlaying = false;
@@ -1610,12 +1611,15 @@ function playFocusAudio(target) {
     audioQueue = [];
     audioHighlightIndices = [];
 
-    // 카드 인덱스에 해당하는 문장을 7번 반복
-    const cardSentence = detailData.basic[activeCardIndex] || detailData.basic[0];
+    // 이 카드의 표현을 "I [표현]." 형태로 7번 반복
+    const cardData = getChunksForVerb(currentVerb)[activeCardIndex];
+    const cardAudio = cardData && cardData.audio ? cardData.audio : null;
+    const sentence = `I ${chunkEng}.`;
     for (let i = 0; i < 7; i++) {
-        audioQueue.push(cardSentence.example);
+        audioQueue.push(sentence);
         audioHighlightIndices.push(activeCardIndex);
     }
+    _cardAudioUrl = cardAudio; // MP3 있으면 첫 재생에 사용
 
     currentAudioTarget = 'top';
     initAudioPlayer();
@@ -1644,6 +1648,7 @@ function playTableAudio(type) {
             detailData.basic.forEach(item => audioQueue.push(item.example));
         }
 
+        _cardAudioUrl = null;
         currentAudioTarget = type;
         initAudioPlayer();
     }, 50);
@@ -1687,13 +1692,34 @@ function speakNextChunk() {
     }
     updateAudioUI();
     const text = audioQueue[audioIndex];
+    const onDone = () => { audioIndex++; if (isAudioPlaying) speakNextChunk(); };
+
+    // 카드 오디오 모드이고 MP3가 있으면 MP3 재생
+    if (currentAudioTarget === 'top' && _cardAudioUrl) {
+        const mp3 = new Audio(_cardAudioUrl);
+        mp3.onended = onDone;
+        mp3.onerror = () => {
+            // MP3 실패 시 TTS 폴백
+            const ut = new SpeechSynthesisUtterance(text);
+            ut.lang = 'en-US'; ut.rate = 0.85;
+            ut.onend = onDone;
+            ut.onerror = () => stopAudioPlayer();
+            window.speechSynthesis.speak(ut);
+        };
+        mp3.play().catch(() => {
+            const ut = new SpeechSynthesisUtterance(text);
+            ut.lang = 'en-US'; ut.rate = 0.85;
+            ut.onend = onDone;
+            ut.onerror = () => stopAudioPlayer();
+            window.speechSynthesis.speak(ut);
+        });
+        return;
+    }
+
     const ut = new SpeechSynthesisUtterance(text);
     ut.lang = 'en-US';
     ut.rate = 0.85;
-    ut.onend = function () {
-        audioIndex++;
-        if (isAudioPlaying) speakNextChunk();
-    };
+    ut.onend = onDone;
     ut.onerror = function (e) {
         console.error('TTS Error', e);
         stopAudioPlayer();
