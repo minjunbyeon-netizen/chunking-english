@@ -1032,7 +1032,7 @@ function renderDayIntro(day) {
     grid.innerHTML = '';
     data.verbs.forEach(verbKey => {
         const displayVerb = verbKey.replace(/[0-9]/g, '');
-        const isDone = completedVerbs.has(verbKey);
+        const isDone = completedVerbs.has(verbKey) || completedDays.has(day);
         let colorClass = "bg-map-pink/10";
         let iconColor = "text-map-pink-dark";
         const v = displayVerb.toLowerCase();
