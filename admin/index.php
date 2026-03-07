@@ -3,49 +3,6 @@ require_once '_auth.php';
 require_once '../config/db.php';
 $BASE = dirname(__DIR__);
 
-/* ── PDF 업로드 핸들러 ── */
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_GET['action'] ?? '') === 'upload_pdf') {
-    header('Content-Type: application/json');
-    $day = (int)($_POST['day'] ?? 0);
-    if ($day < 1 || !isset($_FILES['pdf']) || $_FILES['pdf']['error'] !== UPLOAD_ERR_OK) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Invalid request']);
-        exit;
-    }
-    $finfo = finfo_open(FILEINFO_MIME_TYPE);
-    $mime  = finfo_file($finfo, $_FILES['pdf']['tmp_name']);
-    finfo_close($finfo);
-    if ($mime !== 'application/pdf') {
-        http_response_code(400);
-        echo json_encode(['error' => 'PDF 파일만 업로드 가능합니다']);
-        exit;
-    }
-    $dir  = $BASE . '/asset/pdf';
-    if (!is_dir($dir)) mkdir($dir, 0777, true);
-    $dest = $dir . '/day_' . $day . '.pdf';
-    if (!move_uploaded_file($_FILES['pdf']['tmp_name'], $dest)) {
-        http_response_code(500);
-        echo json_encode(['error' => '저장 실패']);
-        exit;
-    }
-    echo json_encode(['status' => 'ok', 'path' => 'asset/pdf/day_' . $day . '.pdf']);
-    exit;
-}
-
-/* ── PDF 삭제 핸들러 ── */
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_GET['action'] ?? '') === 'delete_pdf') {
-    header('Content-Type: application/json');
-    $day  = (int)($_POST['day'] ?? 0);
-    $dest = $BASE . '/asset/pdf/day_' . $day . '.pdf';
-    if ($day < 1 || !file_exists($dest)) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Not found']);
-        exit;
-    }
-    unlink($dest);
-    echo json_encode(['status' => 'ok']);
-    exit;
-}
 
 function web_url(string $rel): string {
     return '../' . implode('/', array_map('rawurlencode', explode('/', str_replace('\\', '/', $rel))));
@@ -90,11 +47,8 @@ $days = [];
 foreach ($rows as $r) {
     $dn = (int)$r['day_number'];
     $gv = (int)$r['global_num'];
-    if (!isset($days[$dn])) {
-        $pdf_path = $BASE . '/asset/pdf/day_' . $dn . '.pdf';
-        $days[$dn] = ['day_number' => $dn, 'verbs' => [], 'total' => 0, 'img_ok' => 0, 'audio_ok' => 0,
-                      'pdf_exists' => file_exists($pdf_path)];
-    }
+    if (!isset($days[$dn]))
+        $days[$dn] = ['day_number' => $dn, 'verbs' => [], 'total' => 0, 'img_ok' => 0, 'audio_ok' => 0];
     if (!isset($days[$dn]['verbs'][$gv]))
         $days[$dn]['verbs'][$gv] = ['global_num' => $gv, 'verb_en' => $r['verb_en'], 'verb_kr' => $r['verb_kr'], 'expressions' => []];
 
@@ -373,24 +327,11 @@ tbody tr:hover .vcell { background: #faeef1; }
                     ↓ MP3
                 </a>
                 <?php endif; ?>
-                <?php if ($day['pdf_exists']): ?>
-                <a href="../asset/pdf/day_<?= $dn ?>.pdf" target="_blank"
+                <a href="../book.php?day=<?= $dn ?>" target="_blank"
                    onclick="event.stopPropagation()"
                    style="font-size:.72rem;padding:3px 9px;border-radius:4px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;text-decoration:none;white-space:nowrap;">
-                    ↓ PDF
+                    자료받기
                 </a>
-                <button onclick="event.stopPropagation(); deletePdf(<?= $dn ?>, this)"
-                    style="font-size:.72rem;padding:3px 9px;border-radius:4px;border:1px solid #fecdd3;background:#fff1f2;color:#9f1239;cursor:pointer;white-space:nowrap;">
-                    × 삭제
-                </button>
-                <?php else: ?>
-                <label onclick="event.stopPropagation()" style="cursor:pointer;">
-                    <input type="file" accept=".pdf" style="display:none" onchange="uploadPdf(<?= $dn ?>, this)">
-                    <span style="font-size:.72rem;padding:3px 9px;border-radius:4px;border:1px solid #e9d5ff;background:#faf5ff;color:#7c3aed;white-space:nowrap;cursor:pointer;">
-                        + PDF 업로드
-                    </span>
-                </label>
-                <?php endif; ?>
             </div>
         </div>
 
@@ -480,52 +421,6 @@ function toggleDay(n) { document.getElementById('day-' + n).classList.toggle('op
 function expandAll()  { document.querySelectorAll('.day-item').forEach(el => el.classList.add('open')); }
 function collapseAll(){ document.querySelectorAll('.day-item').forEach(el => el.classList.remove('open')); }
 
-async function uploadPdf(day, input) {
-    const file = input.files[0];
-    if (!file) return;
-    const label = input.closest('label');
-    const span  = label.querySelector('span');
-    span.textContent = '업로드 중...';
-    const fd = new FormData();
-    fd.append('day', day);
-    fd.append('pdf', file);
-    try {
-        const res  = await fetch('?action=upload_pdf', { method: 'POST', body: fd });
-        const json = await res.json();
-        if (!res.ok) { alert('오류: ' + (json.error || res.status)); span.textContent = '+ PDF 업로드'; return; }
-        // 업로드 성공 → 헤더 영역을 PDF 다운로드+삭제 버튼으로 교체
-        const container = label.parentElement;
-        container.innerHTML =
-            `<a href="../asset/pdf/day_${day}.pdf" target="_blank"
-               onclick="event.stopPropagation()"
-               style="font-size:.72rem;padding:3px 9px;border-radius:4px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;text-decoration:none;white-space:nowrap;">↓ PDF</a>
-             <button onclick="event.stopPropagation(); deletePdf(${day}, this)"
-               style="font-size:.72rem;padding:3px 9px;border-radius:4px;border:1px solid #fecdd3;background:#fff1f2;color:#9f1239;cursor:pointer;white-space:nowrap;">× 삭제</button>`;
-    } catch(e) {
-        alert('업로드 실패: ' + e.message);
-        span.textContent = '+ PDF 업로드';
-    }
-}
-
-async function deletePdf(day, btn) {
-    if (!confirm(`Day ${day} PDF를 삭제하시겠습니까?`)) return;
-    const fd = new FormData();
-    fd.append('day', day);
-    try {
-        const res  = await fetch('?action=delete_pdf', { method: 'POST', body: fd });
-        const json = await res.json();
-        if (!res.ok) { alert('오류: ' + (json.error || res.status)); return; }
-        // 삭제 성공 → 업로드 버튼으로 교체
-        const container = btn.parentElement;
-        container.innerHTML =
-            `<label onclick="event.stopPropagation()" style="cursor:pointer;">
-               <input type="file" accept=".pdf" style="display:none" onchange="uploadPdf(${day}, this)">
-               <span style="font-size:.72rem;padding:3px 9px;border-radius:4px;border:1px solid #e9d5ff;background:#faf5ff;color:#7c3aed;white-space:nowrap;cursor:pointer;">+ PDF 업로드</span>
-             </label>`;
-    } catch(e) {
-        alert('삭제 실패: ' + e.message);
-    }
-}
 window.addEventListener('DOMContentLoaded', () => {
     const hash = location.hash;
     if (hash && hash.startsWith('#day-')) {
