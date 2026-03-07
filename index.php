@@ -104,7 +104,7 @@ $serverDataJson = json_encode($serverData, JSON_UNESCAPED_UNICODE | JSON_UNESCAP
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>청킹잉글리시 - 엄마랑 아이랑 영어 여행</title>
     <meta name="description" content="하루 3동사, 21표현으로 완성하는 엄마표 영어. 청킹잉글리시와 함께 영어 여행을 떠나요!">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚂</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23C75A6F'/><text x='50' y='62' font-family='Arial Black,sans-serif' font-size='34' font-weight='900' fill='white' text-anchor='middle' letter-spacing='-1'>CKE</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Chewy&family=Quicksand:wght@400;600;700&family=Jua&family=Gowun+Dodum&family=Press+Start+2P&display=swap" rel="stylesheet">
