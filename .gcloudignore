@@ -1,0 +1,10 @@
+.gcloudignore
+.git
+.gitignore
+_backup_local_20260306/
+database/
+README.md
+TODO_디버깅_잔여이슈.txt
+*.sql
+asset/pdf/
+
