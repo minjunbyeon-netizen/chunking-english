@@ -763,13 +763,162 @@ $serverDataJson = json_encode($serverData, JSON_UNESCAPED_UNICODE | JSON_UNESCAP
                                         </div>
                                     </button>
 
-                                    <!-- 백엔드 주석
-                                    - 잠김 상태: station--locked 클래스 추가 + button disabled
-                                    - id 규칙: station-wrap-2 / node-day-2 유지
-                                    -->
                                 </div>
 
+                                <!-- Station 5 -->
+                                <div class="station-wrap node-item station--locked" id="station-wrap-5">
+                                    <div class="map-station-point" id="track-anchor-5"></div>
+                                    <button id="node-day-5" class="station-btn" style="cursor:not-allowed;" disabled aria-disabled="true">
+                                        <div class="station-box-frame">
+                                            <div class="station-awning"></div>
+                                            <div class="station-video">
+                                                <video src="" class="lazy-video" loop muted playsinline preload="none"></video>
+                                                <div class="station-video-glass"></div>
+                                            </div>
+                                            <div class="station-body">
+                                                <div class="station-text-wrap">
+                                                    <div class="station-ride">Food & Cooking</div>
+                                                    <div class="station-title">음식 & 요리</div>
+                                                </div>
+                                                <div class="station-stars">
+                                                    <i class="fa-solid fa-star text-gray-300"></i>
+                                                    <i class="fa-solid fa-star text-gray-300"></i>
+                                                    <i class="fa-solid fa-star text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="station-leg station-leg-left"></div>
+                                        <div class="station-leg station-leg-right"></div>
+                                        <div class="station-label">Station 5</div>
+                                        <div class="station-badge station-badge--locked" aria-hidden="true">
+                                            <i class="fa-solid fa-lock"></i>
+                                        </div>
+                                    </button>
+                                </div>
 
+                                <!-- Station 6 -->
+                                <div class="station-wrap node-item station--locked" id="station-wrap-6">
+                                    <div class="map-station-point" id="track-anchor-6"></div>
+                                    <button id="node-day-6" class="station-btn" style="cursor:not-allowed;" disabled aria-disabled="true">
+                                        <div class="station-box-frame">
+                                            <div class="station-awning"></div>
+                                            <div class="station-video">
+                                                <video src="" class="lazy-video" loop muted playsinline preload="none"></video>
+                                                <div class="station-video-glass"></div>
+                                            </div>
+                                            <div class="station-body">
+                                                <div class="station-text-wrap">
+                                                    <div class="station-ride">Daily Life</div>
+                                                    <div class="station-title">일상 생활</div>
+                                                </div>
+                                                <div class="station-stars">
+                                                    <i class="fa-solid fa-star text-gray-300"></i>
+                                                    <i class="fa-solid fa-star text-gray-300"></i>
+                                                    <i class="fa-solid fa-star text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="station-leg station-leg-left"></div>
+                                        <div class="station-leg station-leg-right"></div>
+                                        <div class="station-label">Station 6</div>
+                                        <div class="station-badge station-badge--locked" aria-hidden="true">
+                                            <i class="fa-solid fa-lock"></i>
+                                        </div>
+                                    </button>
+                                </div>
+
+                                <!-- Station 7 -->
+                                <div class="station-wrap node-item station--locked" id="station-wrap-7">
+                                    <div class="map-station-point" id="track-anchor-7"></div>
+                                    <button id="node-day-7" class="station-btn" style="cursor:not-allowed;" disabled aria-disabled="true">
+                                        <div class="station-box-frame">
+                                            <div class="station-awning"></div>
+                                            <div class="station-video">
+                                                <video src="" class="lazy-video" loop muted playsinline preload="none"></video>
+                                                <div class="station-video-glass"></div>
+                                            </div>
+                                            <div class="station-body">
+                                                <div class="station-text-wrap">
+                                                    <div class="station-ride">Transportation & Travel</div>
+                                                    <div class="station-title">교통 & 여행</div>
+                                                </div>
+                                                <div class="station-stars">
+                                                    <i class="fa-solid fa-star text-gray-300"></i>
+                                                    <i class="fa-solid fa-star text-gray-300"></i>
+                                                    <i class="fa-solid fa-star text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="station-leg station-leg-left"></div>
+                                        <div class="station-leg station-leg-right"></div>
+                                        <div class="station-label">Station 7</div>
+                                        <div class="station-badge station-badge--locked" aria-hidden="true">
+                                            <i class="fa-solid fa-lock"></i>
+                                        </div>
+                                    </button>
+                                </div>
+
+                                <!-- Station 8 -->
+                                <div class="station-wrap node-item station--locked" id="station-wrap-8">
+                                    <div class="map-station-point" id="track-anchor-8"></div>
+                                    <button id="node-day-8" class="station-btn" style="cursor:not-allowed;" disabled aria-disabled="true">
+                                        <div class="station-box-frame">
+                                            <div class="station-awning"></div>
+                                            <div class="station-video">
+                                                <video src="" class="lazy-video" loop muted playsinline preload="none"></video>
+                                                <div class="station-video-glass"></div>
+                                            </div>
+                                            <div class="station-body">
+                                                <div class="station-text-wrap">
+                                                    <div class="station-ride">Health & Medicine</div>
+                                                    <div class="station-title">건강 & 의료</div>
+                                                </div>
+                                                <div class="station-stars">
+                                                    <i class="fa-solid fa-star text-gray-300"></i>
+                                                    <i class="fa-solid fa-star text-gray-300"></i>
+                                                    <i class="fa-solid fa-star text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="station-leg station-leg-left"></div>
+                                        <div class="station-leg station-leg-right"></div>
+                                        <div class="station-label">Station 8</div>
+                                        <div class="station-badge station-badge--locked" aria-hidden="true">
+                                            <i class="fa-solid fa-lock"></i>
+                                        </div>
+                                    </button>
+                                </div>
+
+                                <!-- Station 9 -->
+                                <div class="station-wrap node-item station--locked" id="station-wrap-9">
+                                    <div class="map-station-point" id="track-anchor-9"></div>
+                                    <button id="node-day-9" class="station-btn" style="cursor:not-allowed;" disabled aria-disabled="true">
+                                        <div class="station-box-frame">
+                                            <div class="station-awning"></div>
+                                            <div class="station-video">
+                                                <video src="" class="lazy-video" loop muted playsinline preload="none"></video>
+                                                <div class="station-video-glass"></div>
+                                            </div>
+                                            <div class="station-body">
+                                                <div class="station-text-wrap">
+                                                    <div class="station-ride">Evening Routine</div>
+                                                    <div class="station-title">저녁 일상</div>
+                                                </div>
+                                                <div class="station-stars">
+                                                    <i class="fa-solid fa-star text-gray-300"></i>
+                                                    <i class="fa-solid fa-star text-gray-300"></i>
+                                                    <i class="fa-solid fa-star text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="station-leg station-leg-left"></div>
+                                        <div class="station-leg station-leg-right"></div>
+                                        <div class="station-label">Station 9</div>
+                                        <div class="station-badge station-badge--locked" aria-hidden="true">
+                                            <i class="fa-solid fa-lock"></i>
+                                        </div>
+                                    </button>
+                                </div>
 
                             </div>
 
