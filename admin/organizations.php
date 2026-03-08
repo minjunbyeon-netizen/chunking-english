@@ -11,6 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'add' || $action === 'edit') {
         $name         = trim($_POST['name']         ?? '');
         $region       = trim($_POST['region']       ?? '');
+        $org_code     = trim($_POST['org_code']     ?? '');
         $license_code = trim($_POST['license_code'] ?? '');
         $max_users    = (int)($_POST['max_users']   ?? 100);
         $expires_at   = trim($_POST['expires_at']   ?? '') ?: null;
@@ -18,28 +19,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!$name)         $err = '지자체명을 입력해주세요.';
         if (!$license_code) $err = '허가코드를 입력해주세요.';
+        if ($org_code && (!ctype_digit($org_code) || strlen($org_code) !== 4))
+            $err = '자치단체 고유번호는 숫자 4자리여야 합니다.';
 
         if (!$err) {
             if ($action === 'add') {
                 try {
                     $pdo->prepare("
-                        INSERT INTO organizations (name, region, license_code, max_users, expires_at, note)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                    ")->execute([$name, $region ?: null, $license_code, $max_users, $expires_at, $note ?: null]);
+                        INSERT INTO organizations (name, org_code, region, license_code, max_users, expires_at, note)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                    ")->execute([$name, $org_code ?: null, $region ?: null, $license_code, $max_users, $expires_at, $note ?: null]);
                     $msg = '지자체가 추가되었습니다.';
                 } catch (PDOException $e) {
-                    $err = '허가코드가 이미 사용 중입니다.';
+                    $err = '허가코드 또는 고유번호가 이미 사용 중입니다.';
                 }
             } else {
                 $id = (int)($_POST['id'] ?? 0);
                 try {
                     $pdo->prepare("
-                        UPDATE organizations SET name=?, region=?, license_code=?, max_users=?, expires_at=?, note=?
+                        UPDATE organizations SET name=?, org_code=?, region=?, license_code=?, max_users=?, expires_at=?, note=?
                         WHERE id=?
-                    ")->execute([$name, $region ?: null, $license_code, $max_users, $expires_at, $note ?: null, $id]);
+                    ")->execute([$name, $org_code ?: null, $region ?: null, $license_code, $max_users, $expires_at, $note ?: null, $id]);
                     $msg = '수정되었습니다.';
                 } catch (PDOException $e) {
-                    $err = '허가코드가 이미 사용 중입니다.';
+                    $err = '허가코드 또는 고유번호가 이미 사용 중입니다.';
                 }
             }
         }
@@ -265,6 +268,7 @@ tbody tr:hover td { background: #fdf8f9; }
             <thead>
                 <tr>
                     <th>지자체명</th>
+                    <th style="text-align:center">고유번호</th>
                     <th>허가코드</th>
                     <th style="text-align:center">인원</th>
                     <th>만료일</th>
@@ -276,6 +280,9 @@ tbody tr:hover td { background: #fdf8f9; }
             <?php foreach ($list as $o): ?>
                 <tr class="org-row" data-name="<?= htmlspecialchars(mb_strtolower($o['name'])) ?>" data-code="<?= htmlspecialchars(mb_strtolower($o['license_code'])) ?>">
                     <td><strong><?= htmlspecialchars($o['name']) ?></strong></td>
+                    <td style="text-align:center;font-family:monospace;font-size:.85rem;font-weight:700;letter-spacing:1px;color:var(--pink-dk)">
+                        <?= $o['org_code'] ? htmlspecialchars($o['org_code']) : '<span style="color:var(--muted);font-weight:400">미설정</span>' ?>
+                    </td>
                     <td style="font-family:monospace;font-size:.8rem;letter-spacing:.5px"><?= htmlspecialchars($o['license_code']) ?></td>
                     <td style="text-align:center">
                         <?php $cls = $o['user_count'] >= $o['max_users'] ? 'err' : 'ok'; ?>
@@ -328,6 +335,12 @@ tbody tr:hover td { background: #fdf8f9; }
                 <div class="field">
                     <label>지자체명 *</label>
                     <input type="text" name="name" value="<?= htmlspecialchars($edit_org['name'] ?? '') ?>" placeholder="예: 서울시 강남구" required>
+                </div>
+                <div class="field">
+                    <label>고유번호 (숫자 4자리)</label>
+                    <input type="text" name="org_code" value="<?= htmlspecialchars($edit_org['org_code'] ?? '') ?>"
+                           placeholder="예: 1234" maxlength="4" pattern="\d{4}"
+                           style="font-family:monospace;letter-spacing:2px;font-size:1rem;font-weight:700">
                 </div>
                 <div class="field">
                     <label>지역 (선택)</label>

@@ -88,12 +88,28 @@ $token   = bin2hex(random_bytes(32));
 $expires = date('Y-m-d H:i:s', strtotime('+24 hours'));
 $hashed  = password_hash($password, PASSWORD_BCRYPT);
 
+// 개인 고유번호 생성 ([org_code]-[100001~])
+$user_code = null;
+$org_code_stmt = $pdo->prepare("SELECT org_code FROM organizations WHERE id = ?");
+$org_code_stmt->execute([$org_id]);
+$org_code_val = $org_code_stmt->fetchColumn();
+if ($org_code_val) {
+    $max_stmt = $pdo->prepare("
+        SELECT MAX(CAST(SUBSTRING(user_code, 6) AS UNSIGNED))
+        FROM users WHERE org_id = ? AND user_code IS NOT NULL
+    ");
+    $max_stmt->execute([$org_id]);
+    $max_seq  = (int)$max_stmt->fetchColumn();
+    $next_seq = max($max_seq + 1, 100001);
+    $user_code = $org_code_val . '-' . $next_seq;
+}
+
 // 회원 등록 (미인증 상태)
 $stmt = $pdo->prepare("
-    INSERT INTO users (email, password, nickname, email_verified, verification_token, token_expires_at, org_id)
-    VALUES (?, ?, ?, 0, ?, ?, ?)
+    INSERT INTO users (email, password, nickname, email_verified, verification_token, token_expires_at, org_id, user_code)
+    VALUES (?, ?, ?, 0, ?, ?, ?, ?)
 ");
-$stmt->execute([$email, $hashed, $nickname ?: null, $token, $expires, $org_id]);
+$stmt->execute([$email, $hashed, $nickname ?: null, $token, $expires, $org_id, $user_code]);
 
 // 인증 이메일 발송
 $sent = send_verification_email($email, $nickname ?: $email, $token);

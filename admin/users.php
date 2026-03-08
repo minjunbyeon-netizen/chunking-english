@@ -31,7 +31,7 @@ $filter_org = isset($_GET['org']) && $_GET['org'] !== '' ? (int)$_GET['org'] : n
 // ── 사용자 목록 ───────────────────────────────────────────────
 $sql = "
     SELECT u.id, u.email, u.nickname, u.email_verified, u.created_at, u.role,
-           o.name AS org_name
+           u.user_code, o.name AS org_name
     FROM users u
     LEFT JOIN organizations o ON o.id = u.org_id
 ";
@@ -174,6 +174,7 @@ tbody tr:hover td { background: #fdf8f9; }
             <thead>
                 <tr>
                     <th>#</th>
+                    <th>개인 고유번호</th>
                     <th>이메일</th>
                     <th>닉네임</th>
                     <th>지자체</th>
@@ -185,11 +186,14 @@ tbody tr:hover td { background: #fdf8f9; }
             </thead>
             <tbody>
             <?php if (!$users): ?>
-                <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">사용자가 없습니다.</td></tr>
+                <tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px">사용자가 없습니다.</td></tr>
             <?php endif; ?>
             <?php foreach ($users as $i => $u): ?>
                 <tr>
                     <td style="color:var(--muted);font-size:.72rem"><?= $u['id'] ?></td>
+                    <td style="font-family:monospace;font-size:.85rem;font-weight:700;letter-spacing:1px;color:var(--pink-dk)">
+                        <?= $u['user_code'] ? htmlspecialchars($u['user_code']) : '<span style="color:var(--muted);font-weight:400;font-size:.74rem">미부여</span>' ?>
+                    </td>
                     <td><?= htmlspecialchars($u['email']) ?></td>
                     <td><?= htmlspecialchars($u['nickname'] ?? '-') ?></td>
                     <td style="color:var(--muted)"><?= htmlspecialchars($u['org_name'] ?? '직접 가입') ?></td>
