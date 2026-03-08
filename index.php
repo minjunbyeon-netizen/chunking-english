@@ -26,7 +26,20 @@ require_once 'config/db.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
 $isGuest = empty($_SESSION['user_id']);
 
-// ── DB에서 Day 1~50 전체 데이터 로드 ──────────────────────────────────────────
+// ── 섹션 정의 (9개 테마, Day 1~250) ─────────────────────────────────────────
+$sectionDefs = [
+    ['num' => 1, 'startDay' => 1,   'endDay' => 10,  'kr' => '희망 & 실천',   'en' => 'Hope & Practice',         'video' => './video/hope01.mp4'],
+    ['num' => 2, 'startDay' => 11,  'endDay' => 29,  'kr' => '아침 일상',     'en' => 'Morning Routine',          'video' => './video/morning01.mp4'],
+    ['num' => 3, 'startDay' => 30,  'endDay' => 87,  'kr' => '학교 생활',     'en' => 'School Life',              'video' => './video/school01.mp4'],
+    ['num' => 4, 'startDay' => 88,  'endDay' => 99,  'kr' => '운동 & 스포츠', 'en' => 'Exercise & Sports',        'video' => './video/sport01.mp4'],
+    ['num' => 5, 'startDay' => 100, 'endDay' => 138, 'kr' => '음식 & 요리',   'en' => 'Food & Cooking',           'video' => './video/cooking01.mp4'],
+    ['num' => 6, 'startDay' => 139, 'endDay' => 193, 'kr' => '일상 생활',     'en' => 'Daily Life',               'video' => './video/daily01.mp4'],
+    ['num' => 7, 'startDay' => 194, 'endDay' => 224, 'kr' => '교통 & 여행',   'en' => 'Transportation & Travel',  'video' => './video/travel01.mp4'],
+    ['num' => 8, 'startDay' => 225, 'endDay' => 234, 'kr' => '건강 & 의료',   'en' => 'Health & Medicine',        'video' => './video/health01.mp4'],
+    ['num' => 9, 'startDay' => 235, 'endDay' => 250, 'kr' => '저녁 일상',     'en' => 'Evening Routine',          'video' => './video/evening01.mp4'],
+];
+
+// ── DB에서 Day 1~250 전체 데이터 로드 ──────────────────────────────────────────
 $stmt = $pdo->query("
     SELECT d.day_number,
            v.id AS verb_id, v.global_num, v.verb_en, v.verb_kr,
@@ -36,7 +49,7 @@ $stmt = $pdo->query("
     FROM days d
     JOIN verbs v ON v.day_id = d.id
     JOIN expressions e ON e.verb_id = v.id
-    WHERE d.day_number BETWEEN 1 AND 50
+    WHERE d.day_number BETWEEN 1 AND 250
       AND d.is_active = 1
       AND v.verb_en REGEXP '^[a-zA-Z]'
     ORDER BY d.day_number, v.order_num, e.order_num
@@ -108,6 +121,7 @@ $unlockedDays = $maxCompletedDay + 1;
 
 $serverData = [
     'appBase'         => APP_BASE,
+    'sectionDefs'     => $sectionDefs,
     'levelData'       => $levelData,
     'masterChunkData' => $masterChunkData,
     'iconMap'         => (object)[],

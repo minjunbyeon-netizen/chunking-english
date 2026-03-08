@@ -10,6 +10,16 @@
 const levelData = window.SERVER_DATA.levelData;
 const masterChunkData = window.SERVER_DATA.masterChunkData;
 const iconMap = window.SERVER_DATA.iconMap;
+const sectionDefs = window.SERVER_DATA.sectionDefs;
+
+// 주어진 day number가 속한 섹션 번호(1-9) 반환
+function getDaySection(day) {
+    const d = Number(day);
+    for (let i = 0; i < sectionDefs.length; i++) {
+        if (d >= sectionDefs[i].startDay && d <= sectionDefs[i].endDay) return i + 1;
+    }
+    return 1;
+}
 
 let unlockedDays = window.SERVER_DATA.progress.unlockedDays;
 let completedVerbs = new Set(window.SERVER_DATA.progress.completedVerbs);
@@ -39,7 +49,7 @@ const totalMapDays = 9;
 const stationMaxDays = {1: 10, 2: 19, 3: 58, 4: 12, 5: 39, 6: 55, 7: 31, 8: 10, 9: 16};
 let currentView = 'map';
 let currentVerb = '';
-let currentDay = Math.min(window.SERVER_DATA.progress.currentDay || 1, totalMapDays);
+let currentDay = window.SERVER_DATA.progress.currentDay || 1;
 let pendingTreeModal = false;
 let pendingTogetherModal = false;
 let collectedIndices = new Set();
@@ -765,43 +775,41 @@ function applyStationPositionsOnly() {
 
 function hydrateStationsFromLevelData() {
     for (let i = 1; i <= totalMapDays; i++) {
-        const data = levelData[i];
+        const sec = sectionDefs[i - 1];
         const btn = document.getElementById(`node-day-${i}`);
         const wrap = document.getElementById(`station-wrap-${i}`);
-        if (!btn || !wrap || !data) continue;
+        if (!btn || !wrap || !sec) continue;
 
-        const isLocked = i > unlockedDays;
+        // 섹션의 첫 Day가 unlockedDays 이하이면 열린 상태
+        const isLocked = sec.startDay > unlockedDays;
 
-        // 텍스트 주입
+        // 텍스트 주입 (섹션 이름)
         const rideEl = btn.querySelector('.station-ride');
         const titleEl = btn.querySelector('.station-title');
         const labelEl = btn.querySelector('.station-label');
-        if (rideEl) rideEl.textContent = data.ride || '';
-        if (titleEl) titleEl.textContent = data.title || '';
+        if (rideEl) rideEl.textContent = sec.en || '';
+        if (titleEl) titleEl.textContent = sec.kr || '';
         if (labelEl) labelEl.textContent = `Station ${i}`;
 
-        // video src/poster 주입
+        // video src 주입
         const video = btn.querySelector('video.lazy-video');
-        if (video) {
-            if (data.video) video.src = data.video;
-            if (data.image) video.setAttribute('poster', data.image);
-        }
+        if (video && sec.video) video.src = sec.video;
 
-        // stars 주입 - 완료된 Day는 DB completedDays 기준으로 풀스타 표시
-        const completedCount = completedDays.has(i)
-            ? (levelData[i].verbs ? levelData[i].verbs.length : 3)
-            : (dayProgress[i] ? dayProgress[i].length : 0);
+        // stars 주입 - 섹션 내 완료된 Day 비율로 별 표시
+        const daysInSection = sec.endDay - sec.startDay + 1;
+        const completedInSection = [...completedDays].filter(d => d >= sec.startDay && d <= sec.endDay).length;
+        const starsToShow = Math.min(3, Math.ceil((completedInSection / daysInSection) * 3));
         const starsWrap = btn.querySelector('.station-stars');
         if (starsWrap) {
             let starsHtml = '';
             for (let s = 0; s < 3; s++) {
-                const color = s < completedCount ? 'text-yellow-400 drop-shadow-sm' : 'text-gray-300';
+                const color = s < starsToShow ? 'text-yellow-400 drop-shadow-sm' : 'text-gray-300';
                 starsHtml += `<i class="fa-solid fa-star text-[8px] ${color}"></i>`;
             }
             starsWrap.innerHTML = starsHtml;
         }
 
-        // locked 처리(기존에 하던 class만 토글)
+        // locked 처리
         if (isLocked) {
             btn.style.cursor = 'not-allowed';
             btn.classList.add('grayscale', 'opacity-70');
@@ -810,7 +818,6 @@ function hydrateStationsFromLevelData() {
                 setTimeout(() => wrap.classList.remove('animate-wiggle'), 500);
             };
 
-            // 잠금이면 play hover 레이어 숨김(원래 JS에서 `${!isLocked ? ... : ''}` 했던 부분)
             const playLayer = btn.querySelector('.station-play-layer');
             if (playLayer) playLayer.remove();
             const badgeIcon = btn.querySelector('.station-badge i');
@@ -823,7 +830,6 @@ function hydrateStationsFromLevelData() {
             btn.removeAttribute('disabled');
             btn.removeAttribute('aria-disabled');
             wrap.classList.remove('station--locked');
-            // 배지 아이콘 자물쇠 → 티켓으로 복원
             const badge = btn.querySelector('.station-badge');
             if (badge) {
                 badge.classList.remove('station-badge--locked', 'bg-gray-300', 'border-gray-400');
@@ -831,7 +837,7 @@ function hydrateStationsFromLevelData() {
                 const badgeIcon = badge.querySelector('i');
                 if (badgeIcon) badgeIcon.className = 'fa-solid fa-ticket';
             }
-            btn.onclick = () => openDayIntro(i);
+            btn.onclick = () => openSectionPicker(i);
         }
     }
 }
@@ -890,7 +896,7 @@ function bindStations() {
             btn.style.cursor = 'not-allowed';
             btn.classList.add('grayscale', 'opacity-70');
         } else {
-            btn.onclick = () => openDayIntro(day);
+            btn.onclick = () => openSectionPicker(day);
             btn.style.cursor = 'pointer';
             btn.classList.remove('grayscale', 'opacity-70');
         }
@@ -959,11 +965,11 @@ function switchView(viewName) {
         renderMap();
         if (!pendingDayUnlock) {
             setTimeout(() => {
-                const targetDay = currentDay || 1;
-                placeTrainAtDay(targetDay);
+                const targetSection = getDaySection(currentDay || 1);
+                placeTrainAtDay(targetSection);
 
-                const coords = nodeCoordinates[targetDay];
-                const offset = nodeOffsets[targetDay] || {x: 0, y: -240};
+                const coords = nodeCoordinates[targetSection];
+                const offset = nodeOffsets[targetSection] || {x: 0, y: -240};
                 const scrollContainer = document.getElementById('map-scroll-container');
                 const isMobile = window.innerWidth < 1200;
 
@@ -994,31 +1000,122 @@ function switchView(viewName) {
 
 
 document.addEventListener('click', (e) => {
-    const btn = e.target.closest('button[id^="node-day-"]');
+    const btn = e.target.closest('button[id^=”node-day-”]');
     if (!btn) return;
 
     // 잠김카드는 무시
     if (btn.disabled || btn.getAttribute('aria-disabled') === 'true') return;
 
-    const day = parseInt(btn.id.replace('node-day-', ''), 10);
-    if (!Number.isFinite(day)) return;
+    // btn.onclick이 이미 설정되어 있으면 위임하지 않음 (hydrateStationsFromLevelData에서 처리)
+    if (btn.onclick) return;
 
-    currentDay = day;                 // ✅ 핵심: 클릭한 day를 전역에 세팅
-    highlightDestination(day);         // (선택) 하이라이트 유지
-    switchView('intro');              // ✅ 핵심: 인트로 “모달” 화면으로 전환
+    const sectionNum = parseInt(btn.id.replace('node-day-', ''), 10);
+    if (!Number.isFinite(sectionNum)) return;
+
+    openSectionPicker(sectionNum);
 });
 
 
 function openDayIntro(day) {
     currentDay = day;
+    closeSectionPicker();
     switchView('intro');
+}
+
+// ── 섹션 내 Day 선택 피커 ─────────────────────────────────────────────────────
+function openSectionPicker(sectionNum) {
+    const sec = sectionDefs[sectionNum - 1];
+    if (!sec) return;
+
+    // 현재 보고있는 섹션 번호 저장 (highlightDestination용)
+    highlightDestination(sectionNum);
+    highlightCurrentStation(sectionNum);
+
+    let modal = document.getElementById('section-picker-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'section-picker-modal';
+        modal.style.cssText = `
+            position:fixed; inset:0; z-index:500;
+            display:flex; align-items:flex-end; justify-content:center;
+            background:rgba(0,0,0,0.45); backdrop-filter:blur(4px);
+        `;
+        modal.onclick = (e) => { if (e.target === modal) closeSectionPicker(); };
+        document.body.appendChild(modal);
+    }
+
+    const totalDays = sec.endDay - sec.startDay + 1;
+    const completedInSec = [...completedDays].filter(d => d >= sec.startDay && d <= sec.endDay).length;
+
+    let daysHtml = '';
+    for (let d = sec.startDay; d <= sec.endDay; d++) {
+        const isDone = completedDays.has(d);
+        const isUnlocked = d <= unlockedDays;
+        const isLocked = !isUnlocked && !isDone;
+        const isCurrent = d === currentDay;
+
+        let stateCls, stateIcon, cursor;
+        if (isDone) {
+            stateCls = 'bg-green-100 border-green-400 text-green-700';
+            stateIcon = '<i class="fa-solid fa-check text-green-500 text-xs block mt-0.5"></i>';
+            cursor = 'cursor-pointer';
+        } else if (isUnlocked) {
+            stateCls = isCurrent
+                ? 'bg-pink-100 border-pink-400 text-pink-700 ring-2 ring-pink-400'
+                : 'bg-white border-gray-300 text-gray-700 hover:border-pink-300 hover:bg-pink-50';
+            stateIcon = '<i class="fa-solid fa-play text-pink-400 text-xs block mt-0.5"></i>';
+            cursor = 'cursor-pointer';
+        } else {
+            stateCls = 'bg-gray-100 border-gray-200 text-gray-400';
+            stateIcon = '<i class="fa-solid fa-lock text-gray-300 text-xs block mt-0.5"></i>';
+            cursor = 'cursor-not-allowed';
+        }
+
+        const clickAttr = (isUnlocked || isDone)
+            ? `onclick="openDayIntro(${d})"`
+            : `onclick="this.animate([{transform:'translateX(-3px)'},{transform:'translateX(3px)'},{transform:'translateX(0)'}],{duration:200,iterations:2})"`;
+
+        daysHtml += `
+            <button ${clickAttr} class="${cursor} rounded-xl border-2 ${stateCls} p-1.5 flex flex-col items-center transition-all" style="min-width:44px">
+                <span class="font-bold text-xs leading-tight">${d}</span>
+                ${stateIcon}
+            </button>`;
+    }
+
+    modal.innerHTML = `
+        <div class="bg-white rounded-t-3xl w-full max-w-2xl shadow-2xl" style="max-height:80vh; overflow-y:auto">
+            <div class="flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-100">
+                <div>
+                    <div class="text-xs text-gray-400 font-semibold tracking-widest uppercase">Station ${sectionNum}</div>
+                    <div class="font-bold text-lg text-gray-800">${sec.kr}</div>
+                    <div class="text-sm text-gray-500">${sec.en} &nbsp;·&nbsp; <span class="text-green-600 font-semibold">${completedInSec}/${totalDays}일 완료</span></div>
+                </div>
+                <button onclick="closeSectionPicker()" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-4">
+                <div class="flex flex-wrap gap-2">
+                    ${daysHtml}
+                </div>
+            </div>
+        </div>`;
+
+    modal.style.display = 'flex';
+}
+
+function closeSectionPicker() {
+    const modal = document.getElementById('section-picker-modal');
+    if (modal) modal.style.display = 'none';
 }
 
 function renderDayIntro(day) {
     const data = levelData[day];
+    const secIdx = getDaySection(day) - 1;
+    const sec = sectionDefs[secIdx] || {};
     document.getElementById('intro-day-number').textContent = day;
-    document.getElementById('intro-title').textContent = data.ride;
-    document.getElementById('intro-subtitle').textContent = data.title;
+    document.getElementById('intro-title').textContent = `Day ${day}`;
+    document.getElementById('intro-subtitle').textContent = sec.kr ? `${sec.kr} · ${sec.en}` : (data.title || '');
     const grid = document.getElementById('mission-grid');
     grid.innerHTML = '';
     data.verbs.forEach(verbKey => {
@@ -2069,18 +2166,28 @@ function closeTreeModal() {
             pendingTreeModal = false;
             const nextDay = currentDay + 1;
 
-            if (nextDay <= totalMapDays) {
+            if (nextDay <= 250) {
                 if (unlockedDays < nextDay) {
                     unlockedDays = nextDay;
                     renderMap();
                 }
+                const curSection = getDaySection(currentDay);
+                const nextSection = getDaySection(nextDay);
                 switchView('map');
-                animateTrain(currentDay, nextDay, false, () => {
+                if (curSection !== nextSection) {
+                    // 섹션 경계를 넘으면 기차 애니메이션
+                    animateTrain(curSection, nextSection, false, () => {
+                        currentDay = nextDay;
+                        setTimeout(() => {
+                            openSectionPicker(nextSection);
+                        }, 500);
+                    });
+                } else {
                     currentDay = nextDay;
                     setTimeout(() => {
                         openDayIntro(nextDay);
                     }, 500);
-                });
+                }
             } else {
                 alert("축하합니다! 모든 영어 여행을 마쳤습니다! 🎉");
                 switchView('map');
@@ -2142,11 +2249,12 @@ function onTreeClick(e) {
         if (dist(clickX, clickY, o.x, o.y) < o.size + 15) {
             closeTreeModal();
             currentDay = o.day;
+            const treeTargetSection = getDaySection(currentDay);
             switchView('map');
-            placeTrainAtDay(currentDay);
+            placeTrainAtDay(treeTargetSection);
 
-            const coords = nodeCoordinates[currentDay];
-            const offset = nodeOffsets[currentDay] || {x: 0, y: -240};
+            const coords = nodeCoordinates[treeTargetSection];
+            const offset = nodeOffsets[treeTargetSection] || {x: 0, y: -240};
             const scrollContainer = document.getElementById('map-scroll-container');
             const isMobile = window.innerWidth < 1200;
 
@@ -2579,11 +2687,9 @@ function centerMapOnStation(day, isInstant = false) {
 
 function completeDayAndReturnToMap() {
     switchView('map');
-    const currentMax = stationMaxDays[currentDay];
-    if (stationProgress[currentDay] < currentMax) stationProgress[currentDay]++;
-    else console.log(`Station ${currentDay} Completed!`);
-    placeTrainAtDay(currentDay);
-    highlightDestination(currentDay);
+    const sec = getDaySection(currentDay);
+    placeTrainAtDay(sec);
+    highlightDestination(sec);
     pendingDayUnlock = false;
 }
 
@@ -2789,10 +2895,11 @@ window.onload = function () {
         initNodes();
         renderMap();
         renderMapPath();
-        highlightCurrentStation(currentDay);
-        highlightDestination(currentDay);
-        placeTrainAtDay(currentDay);
-        if (window.innerWidth < 1400) centerMapOnStation(currentDay);
+        const resizeSec = getDaySection(currentDay);
+        highlightCurrentStation(resizeSec);
+        highlightDestination(resizeSec);
+        placeTrainAtDay(resizeSec);
+        if (window.innerWidth < 1400) centerMapOnStation(resizeSec);
     });
 
     window.addEventListener('scroll', () => {
@@ -2853,9 +2960,10 @@ window.onload = function () {
     }
 
     setTimeout(() => {
-        centerMapOnStation(currentDay);
-        animateTrain(0, currentDay, true, () => {
-            highlightDestination(currentDay);
+        const initSec = getDaySection(currentDay);
+        centerMapOnStation(initSec);
+        animateTrain(0, initSec, true, () => {
+            highlightDestination(initSec);
         });
     }, 100);
 };
