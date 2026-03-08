@@ -16,11 +16,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$data     = json_decode(file_get_contents('php://input'), true);
-$email    = trim($data['email']    ?? '');
-$password = trim($data['password'] ?? '');
-$nickname = trim($data['nickname'] ?? '');
-$org_id   = isset($data['org_id']) ? (int)$data['org_id'] : 0;
+$data         = json_decode(file_get_contents('php://input'), true);
+$email        = trim($data['email']        ?? '');
+$password     = trim($data['password']     ?? '');
+$nickname     = trim($data['nickname']     ?? '');
+$license_code = trim($data['license_code'] ?? '');
 
 // 유효성 검사
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -33,20 +33,21 @@ if (strlen($password) < 6) {
     echo json_encode(['error' => '비밀번호는 6자 이상이어야 합니다.']);
     exit;
 }
-if (!$org_id) {
+if (!$license_code) {
     http_response_code(400);
-    echo json_encode(['error' => '소속 지자체를 선택해주세요.']);
+    echo json_encode(['error' => '지자체 인증번호를 입력해주세요.']);
     exit;
 }
 
-// 지자체 검증 (활성 · 만료 · 인원 초과)
-$stmt = $pdo->prepare("SELECT id, is_active, expires_at, max_users FROM organizations WHERE id = ?");
-$stmt->execute([$org_id]);
+// 지자체 인증번호로 조회 (활성 · 만료 · 인원 초과)
+$stmt = $pdo->prepare("SELECT id, is_active, expires_at, max_users FROM organizations WHERE license_code = ?");
+$stmt->execute([$license_code]);
 $org = $stmt->fetch();
+$org_id = $org ? (int)$org['id'] : 0;
 
 if (!$org || !$org['is_active']) {
     http_response_code(400);
-    echo json_encode(['error' => '유효하지 않은 지자체입니다.']);
+    echo json_encode(['error' => '유효하지 않은 인증번호입니다. 지자체에서 받은 번호를 다시 확인해주세요.']);
     exit;
 }
 if ($org['expires_at'] && strtotime($org['expires_at']) < time()) {

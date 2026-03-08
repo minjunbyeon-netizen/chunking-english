@@ -1,26 +1,5 @@
 <?php
 require_once 'config/db.php';
-
-// 활성 지자체 목록 (만료 안된 곳 + 인원 여유 있는 곳)
-$orgs_raw = $pdo->query("
-    SELECT o.id, o.name, o.region,
-           COUNT(u.id) AS user_count, o.max_users
-    FROM organizations o
-    LEFT JOIN users u ON u.org_id = o.id
-    WHERE o.is_active = 1
-      AND (o.expires_at IS NULL OR o.expires_at >= CURDATE())
-    GROUP BY o.id
-    HAVING user_count < o.max_users
-    ORDER BY o.region, o.name
-")->fetchAll();
-
-// 지역 순서 정의
-$region_order = ['서울','부산','대구','인천','광주','대전','울산','세종','경기','강원','충북','충남','전북','전남','경북','경남','제주'];
-$orgs_grouped = [];
-foreach ($orgs_raw as $o) {
-    $orgs_grouped[$o['region']][] = $o;
-}
-uksort($orgs_grouped, fn($a,$b) => array_search($a, $region_order) <=> array_search($b, $region_order));
 ?>
 <!DOCTYPE html>
 <html lang="ko">
@@ -239,19 +218,11 @@ uksort($orgs_grouped, fn($a,$b) => array_search($a, $region_order) <=> array_sea
         <div class="error-msg"   id="error-msg"></div>
         <div class="success-msg" id="success-msg"></div>
 
-        <label class="field-label">소속 지자체</label>
-        <div class="select-wrap">
-            <select id="org_id" class="select-box placeholder" onchange="this.classList.toggle('placeholder', !this.value)">
-                <option value="">지자체를 선택해주세요</option>
-                <?php foreach ($orgs_grouped as $region => $list): ?>
-                <optgroup label="── <?= $region ?> ──">
-                    <?php foreach ($list as $o): ?>
-                    <option value="<?= $o['id'] ?>"><?= htmlspecialchars($o['name']) ?></option>
-                    <?php endforeach; ?>
-                </optgroup>
-                <?php endforeach; ?>
-            </select>
-        </div>
+        <label class="field-label">지자체 인증번호</label>
+        <input type="text" id="license_code" class="input-box"
+               placeholder="지자체에서 받은 인증번호 입력"
+               autocomplete="off" style="letter-spacing:2px;text-transform:uppercase">
+        <div id="org-confirmed" style="display:none;margin:-12px 0 16px;padding:8px 16px;background:#f0fdf4;border:2px solid #bbf7d0;border-radius:12px;color:#166534;font-size:.88rem;"></div>
 
         <label class="field-label">이메일</label>
         <input type="email" id="email" class="input-box" placeholder="이메일 입력" autocomplete="email">
@@ -279,17 +250,39 @@ document.getElementById('password2').addEventListener('keydown', e => {
     if (e.key === 'Enter') doRegister();
 });
 
+// 인증번호 입력 시 지자체 실시간 확인
+let licenseCheckTimer = null;
+document.getElementById('license_code').addEventListener('input', function() {
+    clearTimeout(licenseCheckTimer);
+    const code = this.value.trim();
+    const confirmed = document.getElementById('org-confirmed');
+    confirmed.style.display = 'none';
+    if (code.length < 4) return;
+    licenseCheckTimer = setTimeout(async () => {
+        try {
+            const res = await fetch('<?= APP_BASE ?>/api/auth/check_license.php?code=' + encodeURIComponent(code));
+            const data = await res.json();
+            if (data.name) {
+                confirmed.textContent = '✓ ' + data.name + ' 인증번호가 확인되었습니다.';
+                confirmed.style.display = 'block';
+            } else {
+                confirmed.style.display = 'none';
+            }
+        } catch {}
+    }, 400);
+});
+
 async function doRegister() {
-    const org_id   = document.getElementById('org_id').value;
-    const email    = document.getElementById('email').value.trim();
-    const nickname = document.getElementById('nickname').value.trim();
-    const password = document.getElementById('password').value;
-    const password2= document.getElementById('password2').value;
-    const btn      = document.getElementById('btn-reg');
+    const license_code = document.getElementById('license_code').value.trim();
+    const email        = document.getElementById('email').value.trim();
+    const nickname     = document.getElementById('nickname').value.trim();
+    const password     = document.getElementById('password').value;
+    const password2    = document.getElementById('password2').value;
+    const btn          = document.getElementById('btn-reg');
 
     hideMessages();
 
-    if (!org_id)             return showError('소속 지자체를 선택해주세요.');
+    if (!license_code)       return showError('지자체 인증번호를 입력해주세요.');
     if (!email)              return showError('이메일을 입력해주세요.');
     if (password.length < 6) return showError('비밀번호는 6자 이상이어야 합니다.');
     if (password !== password2) return showError('비밀번호가 일치하지 않습니다.');
@@ -302,7 +295,7 @@ async function doRegister() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ email, password, nickname, org_id: parseInt(org_id) }),
+            body: JSON.stringify({ email, password, nickname, license_code }),
         });
         const data = await res.json();
 
