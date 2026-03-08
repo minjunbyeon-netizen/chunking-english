@@ -1,4 +1,27 @@
 <?php
+/* ── App Engine Gen2 Front-Controller 라우터 ─────────────────────
+   App Engine Standard PHP8.3은 모든 요청을 index.php로 라우팅함.
+   요청 URL에 해당하는 PHP 파일이 있으면 해당 파일을 직접 실행함.
+──────────────────────────────────────────────────────────────────*/
+(function() {
+    $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+    // 루트 또는 index.php 요청은 그냥 통과
+    if ($path === '/' || $path === '/index.php' || $path === '') return;
+    // .php 확장자 파일만 라우팅
+    if (substr($path, -4) !== '.php') return;
+    $file = __DIR__ . $path;
+    $real = realpath($file);
+    if (!$real) return;
+    // 보안: 앱 루트 내에 있고, config/ database/ 폴더 제외
+    if (strpos($real, __DIR__ . DIRECTORY_SEPARATOR) !== 0) return;
+    if (strpos($real, __DIR__ . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR) === 0) return;
+    if (strpos($real, __DIR__ . DIRECTORY_SEPARATOR . 'database' . DIRECTORY_SEPARATOR) === 0) return;
+    if ($real === __FILE__) return;
+    chdir(dirname($real));  // 상대경로(../../config/db.php 등)가 올바르게 해석되도록
+    require $real;
+    exit;
+})();
+
 require_once 'config/db.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
 $isGuest = empty($_SESSION['user_id']);
@@ -84,6 +107,7 @@ $currentDay = $maxCompletedDay + 1;
 $unlockedDays = $maxCompletedDay + 1;
 
 $serverData = [
+    'appBase'         => APP_BASE,
     'levelData'       => $levelData,
     'masterChunkData' => $masterChunkData,
     'iconMap'         => (object)[],

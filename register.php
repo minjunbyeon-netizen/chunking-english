@@ -298,7 +298,7 @@ async function doRegister() {
     btn.textContent = '...';
 
     try {
-        const res  = await fetch('/chunking-english/api/auth/register.php', {
+        const res  = await fetch('<?= APP_BASE ?>/api/auth/register.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',

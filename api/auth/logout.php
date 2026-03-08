@@ -8,7 +8,8 @@ session_start();
 session_destroy();
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    header('Location: /chunking-english/index.php');
+    require_once dirname(__DIR__, 2) . '/config/db.php';
+    header('Location: ' . APP_BASE . '/index.php');
     exit;
 }
 

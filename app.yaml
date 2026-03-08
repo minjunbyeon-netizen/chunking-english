@@ -1,0 +1,39 @@
+runtime: php83
+env: standard
+
+instance_class: F1
+
+automatic_scaling:
+  max_instances: 1
+
+handlers:
+  - url: /asset
+    static_dir: asset
+    secure: always
+
+  - url: /css
+    static_dir: css
+    secure: always
+
+  - url: /js
+    static_dir: js
+    secure: always
+
+  - url: /together.html
+    static_files: together.html
+    upload: together.html
+    secure: always
+
+  - url: /.*
+    script: auto
+    secure: always
+
+env_variables:
+  DB_HOST: "127.0.0.1"
+  DB_NAME: "chunking_english"
+  DB_USER: "chunking_user"
+  DB_PASS: "ChunkingEnglish2026!"
+  DB_SOCKET: "/cloudsql/chunking-english-489506:asia-northeast3:chunking-db"
+
+beta_settings:
+  cloud_sql_instances: chunking-english-489506:asia-northeast3:chunking-db

@@ -1419,11 +1419,13 @@
     }
 
     function downloadPDF() {
-        window.open('/chunking-english/book.php?day=' + currentDay, '_blank');
+        const base = (window.parent.SERVER_DATA?.appBase) || '';
+        window.open(base + '/book.php?day=' + currentDay, '_blank');
     }
 
     function downloadMP3() {
-        window.open('/chunking-english/api/download/day_mp3_merged.php?day=' + currentDay, '_blank');
+        const base = (window.parent.SERVER_DATA?.appBase) || '';
+        window.open(base + '/api/download/day_mp3_merged.php?day=' + currentDay, '_blank');
     }
 </script>
 </body>

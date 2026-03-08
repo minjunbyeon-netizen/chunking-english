@@ -1821,7 +1821,7 @@ function finishVerb() {
 
         // Day 완료 DB 저장 + 로컬 Set 업데이트
         completedDays.add(currentDay);
-        fetch('/chunking-english/api/progress/save.php', {
+        fetch((window.SERVER_DATA?.appBase || '') + '/api/progress/save.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ day_number: currentDay })
