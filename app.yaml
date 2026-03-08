@@ -11,6 +11,10 @@ handlers:
     static_dir: asset
     secure: always
 
+  - url: /img
+    static_dir: img
+    secure: always
+
   - url: /css
     static_dir: css
     secure: always
