@@ -15,6 +15,7 @@ let unlockedDays = window.SERVER_DATA.progress.unlockedDays;
 let completedVerbs = new Set(window.SERVER_DATA.progress.completedVerbs);
 let stationProgress = window.SERVER_DATA.progress.stationProgress;
 let completedDays = new Set((window.SERVER_DATA.progress.completedDays || []).map(Number));
+window.completedDays = completedDays; // together.html iframe에서 window.parent.completedDays로 접근
 
 // ==========================================
 // Global Variables & State
@@ -1862,7 +1863,14 @@ function openTogetherModal() {
     const modal = document.getElementById('together-modal');
     const wrapper = document.getElementById('together-wrapper');
     const frame = document.getElementById('together-frame');
-    if (frame) frame.src = "./together.html";
+    if (frame) {
+        if (frame.src && frame.src.includes('together.html')) {
+            // 이미 로드된 경우: renderGrid만 재호출해 최신 completedDays 반영
+            try { frame.contentWindow.renderGrid(); } catch(e) {}
+        } else {
+            frame.src = "./together.html";
+        }
+    }
     modal.classList.remove('hidden');
     modal.classList.remove('pointer-events-none');
     modal.classList.add('pointer-events-auto');
