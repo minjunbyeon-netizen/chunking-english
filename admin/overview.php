@@ -209,6 +209,7 @@ nav a.active { color: #fff; border-bottom-color: #fff; }
         <a href="organizations.php">지자체 관리</a>
         <a href="users.php">사용자 관리</a>
         <a href="generate_audio.php">오디오 생성</a>
+        <a href="debug.php">디버그</a>
     </nav>
 </header>
 

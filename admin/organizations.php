@@ -229,6 +229,7 @@ tbody tr:hover td { background: #fdf8f9; }
         <a href="organizations.php" class="active">지자체 관리</a>
         <a href="users.php">사용자 관리</a>
         <a href="generate_audio.php">오디오 생성</a>
+        <a href="debug.php">디버그</a>
     </nav>
 </header>
 

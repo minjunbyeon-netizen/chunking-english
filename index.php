@@ -116,8 +116,15 @@ $maxCompletedDay = empty($completedDays) ? 0 : max(array_map('intval', $complete
 $currentDay = $maxCompletedDay + 1;
 
 // 잠금 해제 범위: 완료한 Day까지 + 바로 다음 Day 1개만 열어줌
-// (Day 1이 아직 미완료면 Day 1만, Day N 완료면 Day N+1까지 열림)
 $unlockedDays = $maxCompletedDay + 1;
+
+// ── 관리자 디버그 오버라이드 ───────────────────────────────────────
+if (!empty($_SESSION['debug_override'])) {
+    $dbg = $_SESSION['debug_override'];
+    $currentDay    = (int)($dbg['currentDay']    ?? $currentDay);
+    $completedDays = $dbg['completedDays']        ?? $completedDays;
+    $unlockedDays  = (int)($dbg['unlockedDays']   ?? $unlockedDays);
+}
 
 $serverData = [
     'appBase'         => APP_BASE,
