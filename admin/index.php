@@ -7,29 +7,26 @@ $BASE = dirname(__DIR__);
 function web_url(string $rel): string {
     return '../' . implode('/', array_map('rawurlencode', explode('/', str_replace('\\', '/', $rel))));
 }
+// file_exists() 제거 — DB 경로 유무로만 판단 (GCP file_exists 2100회 호출이 병목)
 function resolve_img(array $expr, array $verb, int $day, string $BASE): array {
     if (!empty($expr['image_path'])) {
         $clean = str_replace('\\', '/', $expr['image_path']);
-        if (file_exists($BASE . '/' . $clean))
-            return ['exists' => true, 'url' => web_url($clean)];
+        return ['exists' => true, 'url' => web_url($clean)];
     }
-    $gv   = str_pad($verb['global_num'], 2, '0', STR_PAD_LEFT);
+    $gv  = str_pad($verb['global_num'], 2, '0', STR_PAD_LEFT);
     $slug = str_replace(' ', '_', $expr['expression_en']);
     $rel  = "asset/img/day {$day}/{$gv}. {$verb['verb_en']}/{$slug}.png";
-    $ok   = file_exists($BASE . '/' . $rel);
-    return ['exists' => $ok, 'url' => $ok ? web_url($rel) : null];
+    return ['exists' => false, 'url' => web_url($rel)];
 }
 function resolve_audio(array $expr, array $verb, int $day, string $BASE): array {
     if (!empty($expr['audio_path'])) {
         $clean = str_replace('\\', '/', $expr['audio_path']);
-        if (file_exists($BASE . '/' . $clean))
-            return ['exists' => true, 'url' => web_url($clean)];
+        return ['exists' => true, 'url' => web_url($clean)];
     }
-    $gv   = str_pad($verb['global_num'], 2, '0', STR_PAD_LEFT);
+    $gv  = str_pad($verb['global_num'], 2, '0', STR_PAD_LEFT);
     $slug = str_replace(' ', '_', $expr['expression_en']);
     $rel  = "asset/audio/day {$day}/{$gv}. {$verb['verb_en']}/{$slug}.mp3";
-    $ok   = file_exists($BASE . '/' . $rel);
-    return ['exists' => $ok, 'url' => $ok ? web_url($rel) : null];
+    return ['exists' => false, 'url' => web_url($rel)];
 }
 
 $rows = $pdo->query("
