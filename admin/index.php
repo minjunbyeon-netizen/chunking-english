@@ -429,5 +429,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 </script>
+<a href="../index.php" title="학습 메인으로" style="position:fixed;bottom:20px;left:20px;z-index:9999;display:flex;align-items:center;gap:8px;background:#C75A6F;color:#fff;border-radius:980px;padding:8px 16px 8px 8px;text-decoration:none;font-size:.8rem;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.18);transition:opacity .2s;" onmouseover="this.style.opacity=.85" onmouseout="this.style.opacity=1"><img src="../img/ck_train.png" style="width:28px;height:28px;object-fit:contain;border-radius:50%;background:#fff;padding:2px;">학습 홈</a>
 </body>
 </html>
