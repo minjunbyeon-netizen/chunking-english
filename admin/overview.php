@@ -57,17 +57,8 @@ function do_sync(PDO $pdo, string $BASE): array {
     return compact('updated_img', 'updated_audio', 'updated_sentence', 'skipped');
 }
 
-function img_exists(array $r, string $BASE): bool {
-    if (!empty($r['image_path']) && file_exists($BASE . '/' . str_replace('\\', '/', $r['image_path']))) return true;
-    $gv = str_pad($r['global_num'], 2, '0', STR_PAD_LEFT);
-    return file_exists($BASE . "/asset/img/day {$r['day_number']}/{$gv}. {$r['verb_en']}/" . str_replace(' ', '_', $r['expression_en']) . ".png");
-}
-function audio_exists(array $r, string $BASE): bool {
-    if (!empty($r['audio_path']) && file_exists($BASE . '/' . str_replace('\\', '/', $r['audio_path']))) return true;
-    $gv = str_pad($r['global_num'], 2, '0', STR_PAD_LEFT);
-    return file_exists($BASE . "/asset/audio/day {$r['day_number']}/{$gv}. {$r['verb_en']}/" . str_replace(' ', '_', $r['expression_en']) . ".mp3");
-}
-
+// file_exists() 완전 제거 — DB의 image_path/audio_path 유무로만 판단
+// (index.php 와 동일한 방식, GCP file_exists 병목 해소)
 $rows = $pdo->query("
     SELECT d.day_number, v.global_num, v.verb_en, v.verb_kr,
            e.expression_en, e.image_path, e.audio_path
@@ -82,9 +73,8 @@ foreach ($rows as $r) {
     if (!isset($all_days[$dn])) $all_days[$dn] = ['total' => 0, 'img' => 0, 'audio' => 0, 'verbs' => []];
     $all_days[$dn]['total']++;
     if (!in_array($r['verb_en'], $all_days[$dn]['verbs'])) $all_days[$dn]['verbs'][] = $r['verb_en'];
-    $rr = array_merge($r, ['day_number' => $dn]);
-    if (img_exists($rr, $BASE))   { $all_days[$dn]['img']++;   $g_img++; }
-    if (audio_exists($rr, $BASE)) { $all_days[$dn]['audio']++; $g_audio++; }
+    if (!empty($r['image_path']))  { $all_days[$dn]['img']++;   $g_img++; }
+    if (!empty($r['audio_path']))  { $all_days[$dn]['audio']++; $g_audio++; }
     $g_total++;
 }
 $max_day = count($all_days);
@@ -95,6 +85,8 @@ $max_day = count($all_days);
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>전체 현황 · 청킹잉글리시 관리자</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 :root {

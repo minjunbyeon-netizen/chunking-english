@@ -1,43 +1,21 @@
 <?php
 require_once '_auth.php';
 require_once '../config/db.php';
-$BASE = dirname(__DIR__);
 
+// 레이지 로딩으로 전환 — 표현 상세는 api_day_detail.php에서 AJAX로 요청
 
-function web_url(string $rel): string {
-    return '../' . implode('/', array_map('rawurlencode', explode('/', str_replace('\\', '/', $rel))));
-}
-// file_exists() 제거 — DB 경로 유무로만 판단 (GCP file_exists 2100회 호출이 병목)
-function resolve_img(array $expr, array $verb, int $day, string $BASE): array {
-    if (!empty($expr['image_path'])) {
-        $clean = str_replace('\\', '/', $expr['image_path']);
-        return ['exists' => true, 'url' => web_url($clean)];
-    }
-    $gv  = str_pad($verb['global_num'], 2, '0', STR_PAD_LEFT);
-    $slug = str_replace(' ', '_', $expr['expression_en']);
-    $rel  = "asset/img/day {$day}/{$gv}. {$verb['verb_en']}/{$slug}.png";
-    return ['exists' => false, 'url' => web_url($rel)];
-}
-function resolve_audio(array $expr, array $verb, int $day, string $BASE): array {
-    if (!empty($expr['audio_path'])) {
-        $clean = str_replace('\\', '/', $expr['audio_path']);
-        return ['exists' => true, 'url' => web_url($clean)];
-    }
-    $gv  = str_pad($verb['global_num'], 2, '0', STR_PAD_LEFT);
-    $slug = str_replace(' ', '_', $expr['expression_en']);
-    $rel  = "asset/audio/day {$day}/{$gv}. {$verb['verb_en']}/{$slug}.mp3";
-    return ['exists' => false, 'url' => web_url($rel)];
-}
-
+// 헤더용 집계만 가져옴 — 표현 전체 HTML은 AJAX 레이지 로딩으로 처리
 $rows = $pdo->query("
     SELECT d.day_number,
-           v.order_num AS v_order, v.global_num, v.verb_en, v.verb_kr, v.sentence_en,
-           e.order_num AS e_order, e.expression_en, e.expression_kr,
-           e.image_path, e.audio_path
+           v.global_num, v.verb_en, v.verb_kr,
+           COUNT(e.id) AS expr_count,
+           SUM(e.image_path IS NOT NULL AND e.image_path != '') AS img_ok,
+           SUM(e.audio_path IS NOT NULL AND e.audio_path != '') AS audio_ok
     FROM days d
     JOIN verbs v ON v.day_id = d.id
     JOIN expressions e ON e.verb_id = v.id
-    ORDER BY d.day_number, v.order_num, e.order_num
+    GROUP BY d.day_number, v.global_num, v.verb_en, v.verb_kr
+    ORDER BY d.day_number, v.global_num
 ")->fetchAll();
 
 $days = [];
@@ -46,22 +24,10 @@ foreach ($rows as $r) {
     $gv = (int)$r['global_num'];
     if (!isset($days[$dn]))
         $days[$dn] = ['day_number' => $dn, 'verbs' => [], 'total' => 0, 'img_ok' => 0, 'audio_ok' => 0];
-    if (!isset($days[$dn]['verbs'][$gv]))
-        $days[$dn]['verbs'][$gv] = ['global_num' => $gv, 'verb_en' => $r['verb_en'], 'verb_kr' => $r['verb_kr'], 'expressions' => []];
-
-    $verb_ref = &$days[$dn]['verbs'][$gv];
-    $img   = resolve_img($r, ['global_num' => $gv, 'verb_en' => $r['verb_en']], $dn, $BASE);
-    $audio = resolve_audio($r, ['global_num' => $gv, 'verb_en' => $r['verb_en']], $dn, $BASE);
-    $verb_ref['expressions'][] = [
-        'expression_en' => $r['expression_en'],
-        'expression_kr' => $r['expression_kr'],
-        'img'           => $img,
-        'audio'         => $audio,
-    ];
-    unset($verb_ref);
-    $days[$dn]['total']++;
-    if ($img['exists'])   $days[$dn]['img_ok']++;
-    if ($audio['exists']) $days[$dn]['audio_ok']++;
+    $days[$dn]['verbs'][$gv] = ['global_num' => $gv, 'verb_en' => $r['verb_en'], 'verb_kr' => $r['verb_kr']];
+    $days[$dn]['total']  += (int)$r['expr_count'];
+    $days[$dn]['img_ok'] += (int)$r['img_ok'];
+    $days[$dn]['audio_ok'] += (int)$r['audio_ok'];
 }
 ?>
 <!DOCTYPE html>
@@ -70,6 +36,8 @@ foreach ($rows as $r) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>청킹잉글리시 관리자</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -261,6 +229,7 @@ tbody tr:hover .vcell { background: #faeef1; }
         <a href="organizations.php">지자체 관리</a>
         <a href="users.php">사용자 관리</a>
         <a href="generate_audio.php">오디오 생성</a>
+        <a href="debug.php">디버그</a>
     </nav>
 </header>
 
@@ -333,55 +302,8 @@ tbody tr:hover .vcell { background: #faeef1; }
         </div>
 
         <div class="day-body">
-            <div class="day-body-inner">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width:82px;text-align:center">동사</th>
-                            <th style="width:24px;text-align:center">#</th>
-                            <th>표현 (영어)</th>
-                            <th>한국어</th>
-                            <th style="width:90px;text-align:center">이미지</th>
-                            <th style="width:54px;text-align:center">MP3</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    <?php foreach ($verbs as $verb):
-                        $span  = count($verb['expressions']);
-                        $first = true;
-                        foreach ($verb['expressions'] as $idx => $e):
-                    ?>
-                        <tr>
-                            <?php if ($first): $first = false; ?>
-                            <td class="vcell" rowspan="<?= $span ?>">
-                                <span class="vnum"><?= str_pad($verb['global_num'], 2, '0', STR_PAD_LEFT) ?></span>
-                                <?= htmlspecialchars($verb['verb_en']) ?>
-                            </td>
-                            <?php endif; ?>
-                            <td style="color:var(--muted);font-size:.72rem;text-align:center"><?= $idx + 1 ?></td>
-                            <td><?= htmlspecialchars($e['expression_en']) ?></td>
-                            <td style="color:var(--muted)"><?= htmlspecialchars($e['expression_kr'] ?? '') ?></td>
-                            <td>
-                                <div class="img-cell">
-                                    <?php if ($e['img']['exists']): ?>
-                                        <img class="thumb" src="<?= htmlspecialchars($e['img']['url']) ?>" alt="" loading="lazy">
-                                    <?php endif; ?>
-                                    <span class="dot <?= $e['img']['exists'] ? 'dot-ok' : 'dot-no' ?>"></span>
-                                </div>
-                            </td>
-                            <td style="text-align:center">
-                                <?php if ($e['audio']['exists']): ?>
-                                    <button class="play-btn" onclick="playAudio(this)" data-src="<?= htmlspecialchars($e['audio']['url']) ?>" title="재생">
-                                        ▶
-                                    </button>
-                                <?php else: ?>
-                                    <span class="dot dot-no"></span>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php endforeach; endforeach; ?>
-                    </tbody>
-                </table>
+            <div class="day-body-inner" id="body-<?= $dn ?>">
+                <div class="lazy-placeholder" style="padding:20px;text-align:center;color:var(--muted);font-size:.8rem">로딩 중...</div>
             </div>
         </div>
     </div>
@@ -414,15 +336,50 @@ function playAudio(btn) {
     audio.onended = () => { btn.classList.remove('playing'); btn.textContent = '▶'; _currentBtn = null; };
 }
 
-function toggleDay(n) { document.getElementById('day-' + n).classList.toggle('open'); }
-function expandAll()  { document.querySelectorAll('.day-item').forEach(el => el.classList.add('open')); }
-function collapseAll(){ document.querySelectorAll('.day-item').forEach(el => el.classList.remove('open')); }
+// 레이지 로딩: 이미 로드된 day는 재요청 안 함
+const _loaded = new Set();
+
+function loadDayContent(n) {
+    const body = document.getElementById('body-' + n);
+    if (!body || _loaded.has(n)) return;
+    _loaded.add(n);
+    fetch('api_day_detail.php?day=' + n)
+        .then(r => r.text())
+        .then(html => { body.innerHTML = html; })
+        .catch(() => { body.innerHTML = '<p style="padding:16px;color:#dc2626;font-size:.8rem">로드 실패</p>'; });
+}
+
+function toggleDay(n) {
+    const el = document.getElementById('day-' + n);
+    const opening = !el.classList.contains('open');
+    el.classList.toggle('open');
+    if (opening) loadDayContent(n);
+}
+function expandAll() {
+    const items = [...document.querySelectorAll('.day-item')];
+    items.forEach(el => el.classList.add('open'));
+    // 50ms 간격으로 순차 fetch (동시 요청 폭발 방지)
+    let i = 0;
+    function loadNext() {
+        if (i >= items.length) return;
+        const n = parseInt(items[i++].id.replace('day-', ''));
+        loadDayContent(n);
+        setTimeout(loadNext, 50);
+    }
+    loadNext();
+}
+function collapseAll() { document.querySelectorAll('.day-item').forEach(el => el.classList.remove('open')); }
 
 window.addEventListener('DOMContentLoaded', () => {
     const hash = location.hash;
     if (hash && hash.startsWith('#day-')) {
         const el = document.querySelector(hash);
-        if (el) { el.classList.add('open'); setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80); }
+        if (el) {
+            const n = parseInt(el.id.replace('day-', ''));
+            el.classList.add('open');
+            loadDayContent(n);
+            setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+        }
     }
 });
 </script>
