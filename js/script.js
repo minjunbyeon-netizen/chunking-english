@@ -1371,9 +1371,13 @@ function openCard(index) {
     const basicTable = document.getElementById('basic-usage-table');
     if (basicTable) basicTable.innerHTML = generateBasicUsageHTML(detailData.basic, data.eng);
 
-    // 4. 버튼 영역 초기화 (Applied 제거, Basic만 빈 값으로 유지)
+    // 4. 하단 LISTEN 버튼 렌더링 (7문장 1번씩 재생)
     const basicBtnWrapper = document.getElementById('btn-wrapper-basic');
-    if (basicBtnWrapper) basicBtnWrapper.innerHTML = '';
+    if (basicBtnWrapper) basicBtnWrapper.innerHTML = `
+        <button onclick="playTableAudio('basic')" class="btn-blue-outline w-full h-full rounded-xl font-bold shadow-sm flex items-center justify-center gap-2">
+            <i class="fa-solid fa-volume-high"></i>
+            <span>Listen</span>
+        </button>`;
 
     // 5. 탭 초기화
     showUsageTab('basic');
@@ -1486,7 +1490,8 @@ function playPreviewAudio7Times() {
         countSpan.textContent = `1/7`;
     }
 
-    speakPreviewNext(text);
+    window.speechSynthesis.cancel();
+    setTimeout(() => speakPreviewNext(text), 150);
 }
 
 // 순차적으로 읽어주는 재귀 함수
@@ -1616,11 +1621,11 @@ function playFocusAudio(target) {
     audioQueue = [];
     audioHighlightIndices = [];
 
-    // 해당 카드 인덱스에 맞는 문장 (I/You/He/She/Do/Don't/Please)을 7번 반복 재생
-    var sentence = (detailData.basic[activeCardIndex] || detailData.basic[0]).example;
+    // 항상 1인칭 단수(I ~) 문장을 7번 반복 재생
+    var sentence = detailData.basic[0].example;
     for (var i = 0; i < 7; i++) {
         audioQueue.push(sentence);
-        audioHighlightIndices.push(activeCardIndex);
+        audioHighlightIndices.push(0);
     }
 
     currentAudioTarget = 'top';
@@ -1667,9 +1672,9 @@ function renderAudioStartButton(target) {
         `;
     } else {
         container.innerHTML = `
-            <button onclick="playTableAudio('${target}')" class="btn-blue-outline w-full h-12 rounded-xl font-bold shadow-sm flex items-center justify-center gap-2 animate-fade">
-                <i class="fa-solid fa-play"></i>
-                <span>Listen and Repeat!</span>
+            <button onclick="playTableAudio('${target}')" class="btn-blue-outline w-full h-full rounded-xl font-bold shadow-sm flex items-center justify-center gap-2 animate-fade">
+                <i class="fa-solid fa-volume-high"></i>
+                <span>Listen</span>
             </button>
         `;
     }
@@ -1680,7 +1685,8 @@ function initAudioPlayer() {
     audioIndex = 0;
     isAudioPlaying = true;
     updateAudioUI();
-    speakNextChunk();
+    // cancel() 직후 즉시 speak하면 Chrome이 오디오 컨텍스트 초기화 전에 첫 단어를 클리핑함
+    setTimeout(() => speakNextChunk(), 150);
 }
 
 function speakNextChunk() {
@@ -1752,7 +1758,7 @@ function restartAudioPlayer() {
     audioIndex = 0;
     isAudioPlaying = true;
     updateAudioUI();
-    speakNextChunk();
+    setTimeout(() => speakNextChunk(), 150);
 }
 
 function updateAudioUI() {
@@ -2088,10 +2094,12 @@ function generateTogetherSentences(day) {
 function playText(text) {
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
-        const ut = new SpeechSynthesisUtterance(text);
-        ut.lang = 'en-US';
-        ut.rate = 0.8;
-        window.speechSynthesis.speak(ut);
+        setTimeout(() => {
+            const ut = new SpeechSynthesisUtterance(text);
+            ut.lang = 'en-US';
+            ut.rate = 0.8;
+            window.speechSynthesis.speak(ut);
+        }, 150);
     }
 }
 
