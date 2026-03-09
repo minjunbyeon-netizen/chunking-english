@@ -448,6 +448,23 @@ document.getElementById('scroll-to-top').addEventListener('click', () => {
     window.scrollTo({top: 0, behavior: 'smooth'});
 });
 
+// board.php iframe 레이지 로드 — 뷰포트에 들어올 때 한 번만 src 설정
+(function() {
+    const boardSection = document.getElementById('board-section');
+    const boardIframe  = document.getElementById('board-iframe');
+    if (!boardSection || !boardIframe) return;
+    let loaded = false;
+    const observer = new IntersectionObserver((entries) => {
+        if (loaded) return;
+        if (entries[0].isIntersecting) {
+            loaded = true;
+            boardIframe.src = './board.php';
+            observer.disconnect();
+        }
+    }, { threshold: 0.05 });
+    observer.observe(boardSection);
+})();
+
 function getTileElement(index) {
     return document.getElementById(`tile-${index}`);
 }

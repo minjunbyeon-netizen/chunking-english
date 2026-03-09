@@ -1156,7 +1156,7 @@ $serverDataJson = json_encode($serverData, JSON_UNESCAPED_UNICODE | JSON_UNESCAP
         </section> <!-- map-section 닫힘 -->
 
         <section id="board-section">
-            <iframe src="./board.php" title="Community Board"></iframe>
+            <iframe id="board-iframe" src="" title="Community Board"></iframe>
         </section>
 
     </main>
