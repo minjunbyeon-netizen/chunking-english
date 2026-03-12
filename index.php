@@ -1432,7 +1432,7 @@ $serverDataJson = json_encode($serverData, JSON_UNESCAPED_UNICODE | JSON_UNESCAP
     <p style="text-align:center;color:#9CA3AF;font-size:0.85rem;margin-bottom:24px">로그인 후 이용할 수 있어요!</p>
     <form id="guestLoginForm">
       <label style="display:block;color:#2D2D2D;font-size:1rem;margin-bottom:10px;padding-left:5px">이메일</label>
-      <input type="email" id="guestEmail" placeholder="이메일 입력" required style="width:100%;height:55px;border:3px solid #2D2D2D;border-radius:20px;padding:0 20px;font-size:1.1rem;outline:none;margin-bottom:20px;box-sizing:border-box">
+      <input type="text" id="guestEmail" placeholder="이메일 입력" required style="width:100%;height:55px;border:3px solid #2D2D2D;border-radius:20px;padding:0 20px;font-size:1.1rem;outline:none;margin-bottom:20px;box-sizing:border-box">
       <label style="display:block;color:#2D2D2D;font-size:1rem;margin-bottom:10px;padding-left:5px">비밀번호</label>
       <input type="password" id="guestPassword" placeholder="비밀번호 입력" required style="width:100%;height:55px;border:3px solid #2D2D2D;border-radius:20px;padding:0 20px;font-size:1.1rem;outline:none;margin-bottom:20px;box-sizing:border-box">
       <div id="guestLoginError" style="color:#FA4252;font-size:0.85rem;margin-bottom:8px;display:none;text-align:center"></div>

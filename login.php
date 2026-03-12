@@ -74,7 +74,7 @@ if (!empty($_SESSION['user_id'])) {
         <form id="loginForm">
             <div class="form-group">
                 <label class="field-label">이메일</label>
-                <input type="email" name="email" id="loginEmail" class="input-box" placeholder="이메일 입력" required>
+                <input type="text" name="email" id="loginEmail" class="input-box" placeholder="이메일 입력" required>
             </div>
             <div class="form-group">
                 <label class="field-label">비밀번호</label>
