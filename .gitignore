@@ -28,3 +28,9 @@ ehthumbs.db
 .vscode/
 .idea/
 *.sublime-project
+
+# ─── PDF 생성 관련 (용량 큰 파일) ────────────────────────────────
+node_modules/
+pdf_output/
+*.pdf
+package-lock.json
