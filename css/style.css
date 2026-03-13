@@ -3256,19 +3256,33 @@ html {
 
 .map-nodes--grid{
     display:flex;
-    gap: 50px;
-    flex-wrap:wrap;
-    position:relative; /* 안전 */
-    left: 50px;
+    gap: clamp(6px, 1.8vw, 36px);
+    flex-wrap: nowrap;
+    position:relative;
+    left: 0;
+    justify-content: center;
+    width: 100%;
 }
 
 
 .map-nodes--grid .station-wrap {
-    position: relative; /* absolute 해제 */
+    position: relative;
     left: auto !important;
     top: auto !important;
-    width: 160px;
-    height: 240px;
+    width: clamp(80px, 8.5vw, 150px);
+    height: clamp(120px, 13vw, 225px);
+    flex-shrink: 0;
+}
+
+.map-nodes--grid .ui-mini-card {
+    width: clamp(62px, 6.8vw, 118px);
+    height: clamp(88px, 9.5vw, 168px);
+}
+
+.map-nodes--grid .ui-mini-img {
+    width: clamp(3rem, 4vw, 6.5rem);
+    height: clamp(3rem, 4vw, 6.5rem);
+    margin-bottom: clamp(0.25rem, 0.5vw, 0.75rem);
 }
 
 
@@ -5032,13 +5046,30 @@ body { overflow-x: hidden; min-height: 100vh; display: flex; flex-direction: col
     position: relative;
     z-index: 20;
     background-color: #FFF5F7; /* 자연스러운 배경색 연결 */
+    box-sizing: border-box !important;
+    /* [수정] 좌우 여백을 180px로 동일하게 맞춰서 가운데 정렬 (상 100, 우 180, 하 100, 좌 180) */
+    padding: 100px 180px 100px 180px !important;
 }
 
+/* 둥근 액자 프레임 디자인 */
 #board-section iframe {
     width: 100%;
     height: 100%;
-    border: none;
     display: block;
+    border-radius: 24px;
+    border: 4px solid #FFD1DA;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+    background-color: #ffffff;
+}
+
+/* =========================================
+   섹션 3 진입 시 플로팅 버튼 가시성 제어
+   ========================================= */
+/* (모든 환경) 게시판 화면에 들어오면 '게시판 플로팅 버튼'은 무조건 숨김 */
+body.is-in-board #floating-board-btn {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
 }
 
 /* =========================================
@@ -5137,4 +5168,192 @@ body { overflow-x: hidden; min-height: 100vh; display: flex; flex-direction: col
     }
     .logout-text { display: none; }
     .logout-btn { padding: 8px; }
+}
+
+/* =========================================
+   반응형 해상도 세부 조정 (디자이너 작업)
+   ========================================= */
+
+/* 태블릿 (1200px 이하): board-section 패딩 */
+@media screen and (max-width: 1200px) {
+    #board-section {
+        /* 태블릿에서도 좌우 여백을 130px로 동일하게 맞춤 */
+        padding: 90px 130px 100px 130px !important;
+    }
+}
+
+/* 모바일 (768px 이하): board-section 패딩 축소 */
+@media screen and (max-width: 768px) {
+    #board-section {
+        /* 모바일은 화면을 넓게 쓰기 위해 좌우 15px로 얇고 동일하게 맞춤 */
+        padding: 80px 15px 20px 15px !important;
+    }
+
+    /* 모바일에서는 여백이 좁아 글쓰기 버튼을 가릴 수 있으므로 투게더/탑 버튼 숨김 */
+    body.is-in-board #scroll-to-top,
+    body.is-in-board .together-fixed {
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        transform: translateY(20px) scale(0.9) !important;
+        transition: all 0.3s ease-out !important;
+    }
+}
+
+/* 모바일에서 스크롤 시 나타나는 상단 고정 로고만 숨김 */
+@media (max-width: 767px) {
+    #logo-scrolled,
+    .logo-scrolled {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+}
+
+/* =========================================
+   섹션 2 (기찻길) 태블릿 화면 최적화
+   - 세로 배열 강제 유지
+   - 팻말과 겹치지 않도록 스테이션1 위치 하단으로 이동
+   - 기차 아이콘 숨김 처리
+   ========================================= */
+@media screen and (max-width: 1200px) {
+    /* 기찻길 박스 컨테이너를 기존(250px)보다 더 아래로(380px) 내림 */
+    .map-nodes--grid {
+        top: 380px !important;
+        left: 50%;
+        transform: translateX(-50%);
+        justify-content: center;
+        align-items: center;
+        flex-direction: column; /* 세로 정렬 보장 */
+        position: absolute;
+        gap: 250px;
+    }
+
+    /* 스테이션이 내려간 만큼 배경의 기찻길(선)도 동일하게 내려서 위치를 맞춤 */
+    #track-svg {
+        top: 130px !important;
+    }
+
+    .map-nodes--grid .station-wrap {
+        width: 96px;
+        height: 145px;
+    }
+
+    /* 청킹투게더 플로팅 버튼 태블릿 크기 및 위치 조정 */
+    .together-fixed {
+        scale: 0.9 !important;
+        top: 20px !important;
+        right: 10px !important;
+        left: auto !important;
+    }
+
+    /* 태블릿 이하 화면에서는 기차 아이콘 완전 숨김 */
+    #park-train {
+        display: none !important;
+    }
+}
+
+/* =========================================
+   태블릿 전용 (768px ~ 1200px): 메인 로고 크기 확대 및 상단 이동
+   ========================================= */
+@media screen and (min-width: 768px) and (max-width: 1200px) {
+    /* 1. 상단 위치로 더 바짝 올리기 */
+    .logo-layer {
+        padding-top: 2.5rem !important;
+    }
+
+    /* 2. 메인 로고 글자 크기 키우기 */
+    .logo-line--primary {
+        font-size: 7vw !important;
+    }
+
+    /* 3. 서브 로고 글자 크기 키우기 */
+    .logo-line--secondary {
+        font-size: 4.5vw !important;
+    }
+
+    /* 4. 스크롤 시 나타나는 Kids & Mom 크기 동기화 */
+    .logo-kids-mom {
+        font-size: 6vw !important;
+    }
+
+    /* 5. 텍스트가 겹치지 않도록 로고 컨테이너 높이 확보 */
+    .logo-stage {
+        height: 16vw !important;
+    }
+}
+
+/* =========================================
+   모바일 전용 (767px 이하): 청킹투게더 플로팅 크기 축소
+   ========================================= */
+@media screen and (max-width: 767px) {
+    .together-fixed {
+        scale: 0.75 !important;
+        top: 15px !important;
+        right: 10px !important;
+        transform-origin: top right !important;
+    }
+}
+
+/* =========================================
+   모바일 전용: 게시판(board-section) 반응형 최적화
+   ========================================= */
+@media screen and (max-width: 768px) {
+    #board-section {
+        /* 상단 네비게이션 공간만 남기고 좌우/하단 여백 최소화 */
+        padding: 70px 10px 15px 10px !important;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* 탑 버튼 모바일에서 다시 나타나게 */
+    body.is-in-board #scroll-to-top {
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        transform: translateY(0) scale(1) !important;
+    }
+
+    #board-section iframe {
+        width: 100%;
+        flex: 1; /* 남은 화면 공간을 꽉 채우도록 */
+        border-radius: 16px !important;
+        border: 2px solid #FFD1DA !important;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* 480px 이하 아주 작은 모바일 화면 대응 */
+@media screen and (max-width: 480px) {
+    #board-section {
+        padding: 60px 0px 60px 0px !important;
+    }
+
+    #board-section iframe {
+        border-radius: 0px !important;
+        border-width: 1px 0 0 0 !important;
+    }
+}
+
+/* =========================================
+   PC 전용 (1201px 이상): 게시판 섹션 화면 꽉 차게 + 배경 연핑크 통일
+   ========================================= */
+@media screen and (min-width: 1201px) {
+    #board-section {
+        padding: 0 !important;
+        height: 100vh !important;
+        background-color: #FFF5F7 !important;
+    }
+
+    #board-section iframe {
+        width: 100% !important;
+        height: 100% !important;
+        border-radius: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        background-color: #FFF5F7 !important;
+    }
 }
