@@ -30,8 +30,12 @@ function do_sync(PDO $pdo, string $BASE): array {
     }
     $upd_img   = $pdo->prepare("UPDATE expressions SET image_path = ? WHERE id = ? AND (image_path IS NULL OR image_path != ?)");
     $upd_audio = $pdo->prepare("UPDATE expressions SET audio_path = ? WHERE id = ? AND (audio_path IS NULL OR audio_path != ?)");
-    foreach (glob($BASE . '/asset/img/day */*/*.png') ?: [] as $f) {
-        $rel = str_replace('\\', '/', substr($f, strlen($BASE) + 1));
+    $manifest_path = $BASE . '/data/img_manifest.json';
+    $img_list = file_exists($manifest_path)
+        ? (json_decode(file_get_contents($manifest_path), true)['images'] ?? [])
+        : array_map(fn($f) => str_replace('\\', '/', substr($f, strlen($BASE) + 1)),
+                    glob($BASE . '/asset/img/day */*/*.png') ?: []);
+    foreach ($img_list as $rel) {
         if (!preg_match('#asset/img/day (\d+)/(\d+)\. .+?/(.+)\.png$#i', $rel, $m)) continue;
         $id = find_id($lookup, (int)$m[1], (int)$m[2], $m[3]);
         if (!$id) { $skipped++; continue; }
@@ -202,6 +206,7 @@ nav a.active { color: #fff; border-bottom-color: #fff; }
         <a href="users.php">사용자 관리</a>
         <a href="generate_audio.php">오디오 생성</a>
         <a href="debug.php">디버그</a>
+        <a href="book-check.php">청킹E-book</a>
     </nav>
 </header>
 

@@ -230,6 +230,7 @@ tbody tr:hover .vcell { background: #faeef1; }
         <a href="users.php">사용자 관리</a>
         <a href="generate_audio.php">오디오 생성</a>
         <a href="debug.php">디버그</a>
+        <a href="book-check.php">청킹E-book</a>
     </nav>
 </header>
 

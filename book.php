@@ -56,6 +56,14 @@ function book_audio_url($expr, $verb, $day_num) {
 
 $prev_day = $day_num > 1  ? $day_num - 1 : null;
 $next_day = $day_num < 250 ? $day_num + 1 : null;
+
+// 10words Listen & Repeat 데이터 로드
+$tw_path = __DIR__ . '/data/10words_mapping.json';
+$lr_items = [];
+if (file_exists($tw_path)) {
+    $tw_all = json_decode(file_get_contents($tw_path), true) ?: [];
+    $lr_items = $tw_all[strval($day_num)] ?? [];
+}
 ?>
 <!DOCTYPE html>
 <html lang="ko">
@@ -226,6 +234,7 @@ $next_day = $day_num < 250 ? $day_num + 1 : null;
             background-image: radial-gradient(var(--line-gray) 1.5px, transparent 1.5px);
             background-size: 28px 28px; z-index: 0; opacity: 0.7; pointer-events: none;
         }
+
         .z-content { position: relative; z-index: 10; display: flex; flex-direction: column; flex-grow: 1; }
 
         /* ---------------------------------
@@ -431,6 +440,7 @@ $next_day = $day_num < 250 ? $day_num + 1 : null;
 
         .eng-sentence { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 1.05rem; color: var(--text-main); line-height: 1.2; margin-bottom: 1px; }
         .kor-sentence { font-family: 'Pretendard', sans-serif; font-weight: 400; font-size: 0.85rem; color: var(--text-sub); }
+        .chunk-type-label { font-size: 0.68rem; color: var(--primary); font-weight: 700; margin-bottom: 2px; letter-spacing: 0.3px; }
 
         /* ---------------------------------
            [푸터]
@@ -679,24 +689,24 @@ $next_day = $day_num < 250 ? $day_num + 1 : null;
         </header>
 
         <section class="magic-card-list">
-            <?php
-            $card_num = 1;
-            foreach ($verbs as $verb):
+            <?php $card_num = 1; foreach ($lr_items as $item):
+                $type_label  = $item['chunk_type'] ?? '';
+                $en_display  = trim(($item['en_front'] ?? '') . ' ' . ($item['en_back'] ?? ''));
+                $kr_display  = trim(($item['kr_front'] ?? '') . ' ' . ($item['kr_back'] ?? ''));
+                if (empty($kr_display)) $kr_display = '뜻 적기';
             ?>
-            <div class="verb-divider"><?= htmlspecialchars($verb['verb_en']) ?> · <?= htmlspecialchars($verb['verb_kr']) ?></div>
-            <?php foreach ($verb['expressions'] as $ei => $expr):
-                $aurl = book_audio_url($expr, $verb, $day_num);
-            ?>
-            <div class="magic-card" <?= $aurl ? 'data-audio-url="'.htmlspecialchars($aurl).'"' : '' ?>>
+            <div class="magic-card">
                 <div class="magic-number-tag"><?= $card_num++ ?></div>
                 <div class="magic-content">
                     <div class="magic-text-box">
-                        <div class="eng-sentence">I <?= htmlspecialchars($expr['expression_en']) ?>.</div>
-                        <div class="kor-sentence">나는 <?= htmlspecialchars($expr['expression_kr'] ?? '') ?>.</div>
+                        <?php if ($type_label): ?>
+                        <div class="chunk-type-label">+ <?= htmlspecialchars($type_label) ?> +</div>
+                        <?php endif; ?>
+                        <div class="eng-sentence"><?= htmlspecialchars($en_display) ?></div>
+                        <div class="kor-sentence"><?= htmlspecialchars($kr_display) ?></div>
                     </div>
                 </div>
             </div>
-            <?php endforeach; ?>
             <?php endforeach; ?>
         </section>
 

@@ -7,4 +7,13 @@ README.md
 TODO_디버깅_잔여이슈.txt
 *.sql
 asset/pdf/
+asset/book-img/
+node_modules/
+pdf_output/
+*.pdf
+*.xlsx
+*.hwp
+*.pptx
+*.url
+chunkingEnglishKidsAndMom_소스코드/
 
